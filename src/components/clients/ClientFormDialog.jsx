@@ -19,18 +19,25 @@ export default function ClientFormDialog({ open, onOpenChange, client, onSaved }
     }
   }, [client, open]);
 
-  const handleSave = async () => {
-    if (!form.name) return;
-    setSaving(true);
-    if (client) {
-      await base44.entities.Client.update(client.id, form);
-    } else {
-      await base44.entities.Client.create(form);
-    }
-    setSaving(false);
-    onSaved();
-    onOpenChange(false);
-  };
+const handleSave = async () => {
+  if (!form.name) return;
+  setSaving(true);
+
+  if (client) {
+    await supabase
+      .from("clients")
+      .update(form)
+      .eq("id", client.id);
+  } else {
+    await supabase
+      .from("clients")
+      .insert([form]);
+  }
+
+  setSaving(false);
+  onSaved();
+  onOpenChange(false);
+};
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
