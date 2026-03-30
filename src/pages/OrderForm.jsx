@@ -1,0 +1,433 @@
+import React, { useState, useEffect } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, Upload, X, FileText, Image, ArrowLeft, Save } from "lucide-react";
+import PrintTypeSelect from "@/components/orders/PrintTypeSelect";
+import OrderActivity from "@/components/orders/OrderActivity";
+import { createPageUrl } from "@/utils";
+import { useNavigate } from "react-router-dom";
+
+const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
+const PRIORITIES = ["niski", "średni", "wysoki"];
+const CHANNELS = ["Mobart", "Viper", "Zlecenie ze sklepu"];
+const SETTLEMENTS = ["nierozliczone", "rozliczone", "częściowo rozliczone"];
+
+const SETTLEMENT_COLORS = {
+  "nierozliczone": "text-red-400",
+  "rozliczone": "text-green-400",
+  "częściowo rozliczone": "text-yellow-400",
+};
+
+const emptyForm = {
+  title: "", client_id: "", status: "Nowe", priority: "średni",
+  print_type: "", channel: "Mobart", graphic: "", assignee: "",
+  deadline: "", print_date: "", description: "",
+  meters: "", price: "", settlement: "nierozliczone", files: []
+};
+
+export default function OrderForm() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const orderId = urlParams.get("id");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [form, setForm] = useState(emptyForm);
+  const [originalForm, setOriginalForm] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => base44.entities.Client.list(),
+  });
+
+  const { data: existingOrder, isLoading } = useQuery({
+    queryKey: ["order", orderId],
+    queryFn: () => base44.entities.Order.filter({ id: orderId }),
+    enabled: !!orderId,
+  });
+
+  useEffect(() => {
+    if (existingOrder && existingOrder.length > 0) {
+      const o = existingOrder[0];
+      const loaded = {
+        title: o.title || "",
+        client_id: o.client_id || "",
+        status: o.status || "Nowe",
+        priority: o.priority || "średni",
+        print_type: o.print_type || "",
+        channel: o.channel || "Mobart",
+        graphic: o.graphic || "",
+        assignee: o.assignee || "",
+        deadline: o.deadline ? o.deadline.slice(0, 16) : "",
+        print_date: o.print_date ? o.print_date.slice(0, 16) : "",
+        description: o.description || "",
+        meters: o.meters || "",
+        price: o.price || "",
+        settlement: o.settlement || "nierozliczone",
+        files: o.files || [],
+      };
+      setForm(loaded);
+      setOriginalForm(loaded);
+    }
+  }, [existingOrder]);
+
+  const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  // Parses dimensions like "100x200cm", "1.5x3m", "100x200" (assumed cm) from a string
+  const parseMeersFromTitle = (title) => {
+    // match NUM x NUM followed optionally by cm or m (with word boundary)
+    const match = title.match(/(\d+(?:[.,]\d+)?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)\s*(cm|m)\b/i);
+    if (match) {
+      let w = parseFloat(match[1].replace(",", "."));
+      let h = parseFloat(match[2].replace(",", "."));
+      const unit = match[3].toLowerCase();
+      if (unit === "cm") return parseFloat(((w / 100) * (h / 100)).toFixed(4));
+      return parseFloat((w * h).toFixed(4)); // already meters
+    }
+    // No unit — assume cm if both numbers look like centimetres (> 1)
+    const matchNoUnit = title.match(/(\d+(?:[.,]\d+)?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)/i);
+    if (matchNoUnit) {
+      let w = parseFloat(matchNoUnit[1].replace(",", "."));
+      let h = parseFloat(matchNoUnit[2].replace(",", "."));
+      // assume cm
+      return parseFloat(((w / 100) * (h / 100)).toFixed(4));
+    }
+    return null;
+  };
+
+  const handleTitleChange = (val) => {
+    setForm(prev => {
+      const next = { ...prev, title: val };
+      // only auto-fill if meters field is empty
+      if (!prev.meters) {
+        const calc = parseMeersFromTitle(val);
+        if (calc !== null) next.meters = String(calc);
+      }
+      return next;
+    });
+  };
+
+  const handleFileUpload = async (e) => {
+    const fileList = Array.from(e.target.files);
+    if (!fileList.length) return;
+    setUploading(true);
+    const newFiles = [];
+    for (const file of fileList) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      newFiles.push({ name: file.name, url: file_url, type: file.type });
+    }
+    setForm(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
+    setUploading(false);
+  };
+
+  const removeFile = (idx) => setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
+
+  const TRACKED_FIELDS = ["status", "priority", "assignee", "graphic", "deadline", "print_date", "settlement", "channel", "meters", "price", "print_type", "title"];
+  const FIELD_LABELS_SAVE = { status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik", deadline: "Termin", print_date: "Data wydruku", settlement: "Rozliczenie", channel: "Kanał", meters: "Metry (m²)", price: "Cena", print_type: "Produkt", title: "Nazwa zlecenia" };
+
+  const handleSave = async (andNew = false) => {
+    if (!form.title || !form.client_id) return;
+    setSaving(true);
+    const client = clients.find(c => c.id === form.client_id);
+    const data = {
+      ...form,
+      client_name: client?.name || "",
+      meters: form.meters ? parseFloat(form.meters) : null,
+      price: form.price ? parseFloat(form.price) : null,
+    };
+    if (orderId) {
+      await base44.entities.Order.update(orderId, data);
+      // Record history for changed fields
+      if (originalForm) {
+        for (const field of TRACKED_FIELDS) {
+          const oldVal = String(originalForm[field] ?? "");
+          const newVal = String(form[field] ?? "");
+          if (oldVal !== newVal) {
+            await base44.entities.OrderComment.create({
+              order_id: orderId,
+              type: "history",
+              content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+              author: "Użytkownik",
+              field_changed: field,
+              old_value: oldVal,
+              new_value: newVal,
+            });
+          }
+        }
+      }
+    } else {
+      await base44.entities.Order.create(data);
+    }
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+    setSaving(false);
+    if (andNew) {
+      setForm(emptyForm);
+      navigate(createPageUrl("OrderForm"));
+    } else {
+      navigate(createPageUrl("Orders"));
+    }
+  };
+
+  const getFileIcon = (type) => {
+    if (type?.startsWith("image")) return <Image className="w-4 h-4 text-purple-400" />;
+    return <FileText className="w-4 h-4 text-blue-400" />;
+  };
+
+  if (isLoading) return <div className="text-center py-20 text-zinc-500">Ładowanie...</div>;
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(createPageUrl("Orders"))} className="text-zinc-500 hover:text-zinc-100 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-2xl font-bold text-zinc-100 uppercase tracking-wide">
+            {orderId ? "Edytuj zlecenie" : "Utwórz"}
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => handleSave(false)} disabled={saving || !form.title || !form.client_id}
+            className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Zapisz
+          </Button>
+          <Button onClick={() => navigate(createPageUrl("Orders"))} variant="outline"
+            className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
+            Anuluj
+          </Button>
+          {!orderId && (
+            <Button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.client_id}
+              variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
+              Zamknij i utwórz nowe
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Section: Przegląd zadań */}
+      <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl overflow-hidden">
+        <div className="px-5 py-3 bg-zinc-800/60 border-b border-zinc-700/50">
+          <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Przegląd zadań</h2>
+        </div>
+        <div className="p-5 space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Nr lub nazwa zlecenia *</Label>
+              <Input value={form.title} onChange={e => handleTitleChange(e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+                placeholder="np. arciszewska 100x200cm Folia Mono" />
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Produkt (typ wydruku) *</Label>
+              <PrintTypeSelect value={form.print_type} onChange={v => set("print_type", v)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Klient *</Label>
+              <Select value={form.client_id} onValueChange={v => set("client_id", v)}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue placeholder="Wybierz klienta" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id} className="text-zinc-100 focus:bg-zinc-700">{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Termin wydania zamówienia *</Label>
+              <Input type="datetime-local" value={form.deadline} onChange={e => set("deadline", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Rodzaj zadania (technologia)</Label>
+              <Input value={form.print_type?.split(" ")[0] || ""} readOnly
+                className="bg-zinc-800/50 border-zinc-700 text-zinc-500 cursor-not-allowed"
+                placeholder="Wypełni się automatycznie z Produktu" />
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Kanał zlecenia *</Label>
+              <Select value={form.channel} onValueChange={v => set("channel", v)}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {CHANNELS.map(c => (
+                    <SelectItem key={c} value={c} className="text-zinc-100 focus:bg-zinc-700">{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Grafik</Label>
+              <Input value={form.graphic} onChange={e => set("graphic", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100" placeholder="np. Klaudia" />
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Pracownik</Label>
+              <Input value={form.assignee} onChange={e => set("assignee", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100" placeholder="np. Robert" />
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-zinc-400 text-xs mb-1.5 block">Opis</Label>
+            <Textarea value={form.description} onChange={e => set("description", e.target.value)}
+              className="bg-zinc-800 border-zinc-700 text-zinc-100 min-h-[100px]"
+              placeholder="Szczegóły zlecenia, uwagi..." />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Stan rozliczenia</Label>
+              <Select value={form.settlement} onValueChange={v => set("settlement", v)}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {SETTLEMENTS.map(s => (
+                    <SelectItem key={s} value={s} className={`focus:bg-zinc-700 ${SETTLEMENT_COLORS[s] || "text-zinc-100"}`}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Status *</Label>
+              <Select value={form.status} onValueChange={v => set("status", v)}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {STATUSES.map(s => (
+                    <SelectItem key={s} value={s} className="text-zinc-100 focus:bg-zinc-700">{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Dane produkcyjne */}
+      <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl overflow-hidden">
+        <div className="px-5 py-3 bg-zinc-800/60 border-b border-zinc-700/50">
+          <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Dane produkcyjne</h2>
+        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Data wydruku</Label>
+              <Input type="datetime-local" value={form.print_date} onChange={e => set("print_date", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100" />
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">
+                Metry (m²)
+                {form.meters && parseMeersFromTitle(form.title) === parseFloat(form.meters) && (
+                  <span className="ml-2 text-blue-400 font-normal">obliczone z nazwy</span>
+                )}
+              </Label>
+              <Input type="number" step="0.01" value={form.meters} onChange={e => set("meters", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100" placeholder="0.00 (auto z nazwy np. 100x200cm)" />
+            </div>
+            <div>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Cena (PLN)</Label>
+              <Input type="number" step="0.01" value={form.price} onChange={e => set("price", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100" placeholder="0.00" />
+            </div>
+          </div>
+          <div className="mt-4">
+            <Label className="text-zinc-400 text-xs mb-1.5 block">Priorytet</Label>
+            <div className="flex gap-2">
+              {PRIORITIES.map(p => (
+                <button key={p} type="button" onClick={() => set("priority", p)}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium border transition-all ${
+                    form.priority === p
+                      ? p === "wysoki" ? "bg-red-600 border-red-500 text-white"
+                        : p === "średni" ? "bg-yellow-600 border-yellow-500 text-white"
+                        : "bg-green-700 border-green-600 text-white"
+                      : "border-zinc-700 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
+                  }`}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Pliki */}
+      <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl overflow-hidden">
+        <div className="px-5 py-3 bg-zinc-800/60 border-b border-zinc-700/50">
+          <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Pliki</h2>
+        </div>
+        <div className="p-5 space-y-2">
+          {form.files.map((f, i) => (
+            <div key={i} className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 text-sm">
+              {getFileIcon(f.type)}
+              <a href={f.url} target="_blank" rel="noopener noreferrer"
+                className="text-zinc-300 hover:text-white truncate flex-1">{f.name}</a>
+              <button onClick={() => removeFile(i)} className="text-zinc-500 hover:text-red-400">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+          <label className="flex items-center gap-2 cursor-pointer bg-zinc-800 hover:bg-zinc-750 border border-dashed border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-300">
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {uploading ? "Przesyłanie..." : "Dodaj pliki (PDF, JPG, AI, PSD, CDR)"}
+            <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.ai,.psd,.cdr" className="hidden"
+              onChange={handleFileUpload} disabled={uploading} />
+          </label>
+        </div>
+      </div>
+
+      {/* Section: Aktywność */}
+      {orderId && (
+        <div className="bg-zinc-900/60 border border-zinc-800/50 rounded-xl overflow-hidden">
+          <div className="px-5 py-3 bg-zinc-800/60 border-b border-zinc-700/50">
+            <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Komentarze i historia zmian</h2>
+          </div>
+          <div className="p-5">
+            <OrderActivity orderId={orderId} />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom action bar */}
+      <div className="flex items-center gap-2 pb-4">
+        <Button onClick={() => handleSave(false)} disabled={saving || !form.title || !form.client_id}
+          className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Zapisz
+        </Button>
+        <Button onClick={() => navigate(createPageUrl("Orders"))} variant="outline"
+          className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
+          Anuluj
+        </Button>
+        {!orderId && (
+          <Button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.client_id}
+            variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
+            Zamknij i utwórz nowe
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}

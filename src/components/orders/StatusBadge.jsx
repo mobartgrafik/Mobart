@@ -1,0 +1,24 @@
+import React from "react";
+import { cn } from "@/lib/utils";
+
+const statusConfig = {
+  "Nowe": { bg: "bg-blue-500/20", text: "text-blue-400", dot: "bg-blue-400" },
+  "W trakcie": { bg: "bg-amber-500/20", text: "text-amber-400", dot: "bg-amber-400" },
+  "Do przekazania": { bg: "bg-purple-500/20", text: "text-purple-400", dot: "bg-purple-400" },
+  "Wydrukowane": { bg: "bg-emerald-500/20", text: "text-emerald-400", dot: "bg-emerald-400" },
+  "Zakończone": { bg: "bg-zinc-500/20", text: "text-zinc-400", dot: "bg-zinc-400" },
+};
+
+export default function StatusBadge({ status, size = "sm" }) {
+  const config = statusConfig[status] || statusConfig["Nowe"];
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1.5 rounded-full font-medium",
+      config.bg, config.text,
+      size === "sm" ? "px-2.5 py-0.5 text-xs" : "px-3 py-1 text-sm"
+    )}>
+      <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
+      {status}
+    </span>
+  );
+}
