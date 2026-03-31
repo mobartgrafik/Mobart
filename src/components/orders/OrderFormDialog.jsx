@@ -63,7 +63,7 @@ const handleSave = async () => {
   setSaving(true);
 
   try {
-    const client = clients.find(c => c.id === form.client_id);
+    const client = clients.find(c => c.id === Number(form.client_id));
     const data = { ...form, client_name: client?.name || "" };
 
     if (order) {
