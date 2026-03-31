@@ -1,5 +1,5 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/supabase";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import StatusBadge from "./StatusBadge";
@@ -17,13 +17,24 @@ const columnColors = {
 };
 
 export default function KanbanBoard({ orders, onEdit, onRefresh }) {
-  const handleDrop = async (e, newStatus) => {
-    e.preventDefault();
-    const orderId = e.dataTransfer.getData("orderId");
-    if (!orderId) return;
-    await base44.entities.Order.update(orderId, { status: newStatus });
-    onRefresh();
-  };
+const handleDrop = async (e, newStatus) => {
+  e.preventDefault();
+
+  const orderId = e.dataTransfer.getData("orderId");
+  if (!orderId) return;
+
+  const { error } = await supabase
+    .from("orders")
+    .update({ status: newStatus })
+    .eq("id", orderId);
+
+  if (error) {
+    console.error("Kanban update error:", error);
+    return;
+  }
+
+  onRefresh();
+};
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -43,7 +54,7 @@ export default function KanbanBoard({ orders, onEdit, onRefresh }) {
               {columnOrders.map(order => (
                 <div key={order.id}
                   draggable
-                  onDragStart={e => e.dataTransfer.setData("orderId", order.id)}
+                  onDragStart={e => e.dataTransfer.setData("orderId", String(order.id))}
                   onClick={() => onEdit(order)}
                   className="bg-zinc-800/80 hover:bg-zinc-800 rounded-lg p-3 cursor-pointer border border-zinc-700/30 hover:border-zinc-700"
                 >
