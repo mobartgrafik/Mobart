@@ -20,17 +20,17 @@ export default function ClientDetail() {
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => base44.entities.Client.list(),
-  });
+const { data: clients = [] } = useQuery({
+  queryKey: ["clients"],
+  queryFn: () => base44.entities.Client.list(),
+});
 
-  const client = clients.find(c => c.id === clientId);
+const client = clients.find(c => c.id === clientId);
 
-  const { data: allOrders = [] } = useQuery({
-    queryKey: ["orders"],
-    queryFn: () => base44.entities.Order.list("-created_date"),
-  });
+const { data: allOrders = [] } = useQuery({
+  queryKey: ["orders"],
+  queryFn: () => base44.entities.Order.list("-created_date"),
+});
 
   const clientOrders = allOrders.filter(o => o.client_id === clientId);
 
