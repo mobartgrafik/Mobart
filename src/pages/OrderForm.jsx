@@ -228,34 +228,6 @@ const handleSave = async (andNew = false) => {
 
   setSaving(false);
 };
-await supabase
-  .from("order_comments")
-  .insert([
-    {
-      order_id: orderId,
-      type: "history",
-      content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-      author: "Użytkownik",
-      field_changed: field,
-      old_value: oldVal,
-      new_value: newVal,
-    }
-  ]);
-        }
-      }
-    } else {
-      await base44.entities.Order.create(data);
-    }
-    queryClient.invalidateQueries({ queryKey: ["orders"] });
-    setSaving(false);
-    if (andNew) {
-      setForm(emptyForm);
-      navigate(createPageUrl("OrderForm"));
-    } else {
-      navigate(createPageUrl("Orders"));
-    }
-  };
-
   const getFileIcon = (type) => {
     if (type?.startsWith("image")) return <Image className="w-4 h-4 text-purple-400" />;
     return <FileText className="w-4 h-4 text-blue-400" />;
