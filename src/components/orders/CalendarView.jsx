@@ -3,7 +3,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addM
 import { pl } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/supabase";
 import { useQueryClient } from "@tanstack/react-query";
 
 const STATUS_COLORS = {
@@ -50,27 +50,36 @@ export default function CalendarView({ orders, onEdit }) {
     setDragOver(date.toISOString());
   };
 
-  const handleDrop = async (e, date) => {
-    e.preventDefault();
-    if (!dragging) return;
-    const newDeadline = new Date(date);
-    // preserve original time if exists
-    if (dragging.deadline) {
-      const orig = parseISO(dragging.deadline);
-      newDeadline.setHours(orig.getHours(), orig.getMinutes(), 0, 0);
-    } else {
-      newDeadline.setHours(9, 0, 0, 0);
-    }
-    await base44.entities.Order.update(dragging.id, { deadline: newDeadline.toISOString() });
-    queryClient.invalidateQueries({ queryKey: ["orders"] });
-    setDragging(null);
-    setDragOver(null);
-  };
+ const handleDrop = async (e, date) => {
+  e.preventDefault();
+  if (!dragging) return;
 
-  const handleDragEnd = () => {
-    setDragging(null);
-    setDragOver(null);
-  };
+  const newDeadline = new Date(date);
+
+  if (dragging.deadline) {
+    const orig = parseISO(dragging.deadline);
+    newDeadline.setHours(orig.getHours(), orig.getMinutes(), 0, 0);
+  } else {
+    newDeadline.setHours(9, 0, 0, 0);
+  }
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      deadline: newDeadline.toISOString()
+    })
+    .eq("id", dragging.id);
+
+  if (error) {
+    console.error("Calendar update error:", error);
+  }
+
+  queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+  setDragging(null);
+  setDragOver(null);
+};
+
 
   const WEEK_DAYS = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"];
 
