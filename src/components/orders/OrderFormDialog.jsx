@@ -59,25 +59,28 @@ const handleFileUpload = async (e) => {
   };
 
 const handleSave = async () => {
-  if (!form.title || !form.client_id) return;
+  if (!form.title || !form.client_id?.toString().length) return;
 
   setSaving(true);
 
   try {
     const client = clients.find(c => c.id === Number(form.client_id));
 
-    const data = {
-      title: form.title,
-      client_id: Number(form.client_id),
-      client_name: client?.name || "",
-      status: form.status,
-      priority: form.priority,
-      deadline: form.deadline || null,
-      assignee: form.assignee || "",
-      printType: form.print_type || "",
-      notes: form.description || "",
-      files: form.files || []
-    };
+const data = {
+  title: form.title || "",
+  client_id: Number(form.client_id),
+  client_name: client?.name || "",
+  status: form.status || "Nowe",
+  priority: form.priority || "średni",
+  deadline: form.deadline || null,
+  assignee: form.assignee || "",
+  printType: form.print_type || "",
+  channel: form.channel || "",
+  meters: form.meters || null,
+  settlement: form.settlement || "",
+  notes: form.description || "",
+  files: form.files || []
+};
 
     if (order) {
       const { error } = await supabase
