@@ -111,7 +111,7 @@ const handleSave = async () => {
           </div>
           <div>
             <Label className="text-zinc-400 text-xs">Klient *</Label>
-            <Select value={form.client_id} onValueChange={v => setForm({...form, client_id: v})}>
+            <Select value={String(form.client_id || "")} onValueChange={v => setForm({...form, client_id: v})}>
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1">
                 <SelectValue placeholder="Wybierz klienta" />
               </SelectTrigger>
