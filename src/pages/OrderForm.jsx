@@ -57,11 +57,11 @@ export default function OrderForm() {
   const { data: existingOrder, isLoading } = useQuery({
     queryKey: ["order", orderId],
     queryFn: async () => {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("id", orderId)
-    .single();
+const { data, error } = await supabase
+  .from("orders")
+  .select("*")
+  .eq("id", orderId)
+  .maybeSingle();
 
   if (error) throw error;
   return data;
@@ -130,34 +130,40 @@ export default function OrderForm() {
     });
   };
 
-  const handleFileUpload = async (e) => {
-    const fileList = Array.from(e.target.files);
-    if (!fileList.length) return;
-    setUploading(true);
-    const newFiles = [];
-    for (const file of fileList) {
-      const fileName = `${Date.now()}-${file.name}`;
+const handleFileUpload = async (e) => {
+  const fileList = Array.from(e.target.files);
+  if (!fileList.length) return;
 
-const { error } = await supabase.storage
-  .from("order-files")
-  .upload(fileName, file);
+  setUploading(true);
+  const newFiles = [];
 
-if (error) throw error;
+  for (const file of fileList) {
+    const fileName = `${Date.now()}-${file.name}`;
 
-const { data } = supabase.storage
-  .from("order-files")
-  .getPublicUrl(fileName);
+    const { error } = await supabase.storage
+      .from("order-files")
+      .upload(fileName, file);
 
-newFiles.push({
-  name: file.name,
-  url: data.publicUrl,
-  type: file.type
-});
-      newFiles.push({ name: file.name, url: file_url, type: file.type });
-    }
-    setForm(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
-    setUploading(false);
-  };
+    if (error) throw error;
+
+    const { data } = supabase.storage
+      .from("order-files")
+      .getPublicUrl(fileName);
+
+    newFiles.push({
+      name: file.name,
+      url: data.publicUrl,
+      type: file.type
+    });
+  }
+
+  setForm(prev => ({
+    ...prev,
+    files: [...prev.files, ...newFiles]
+  }));
+
+  setUploading(false);
+};
 
   const removeFile = (idx) => setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
 
