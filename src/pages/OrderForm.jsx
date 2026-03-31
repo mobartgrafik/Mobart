@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,18 +43,35 @@ export default function OrderForm() {
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients"],
-    queryFn: () => base44.entities.Client.list(),
+    queryFn: async () => {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .order("name");
+
+  if (error) throw error;
+  return data;
+}
   });
 
   const { data: existingOrder, isLoading } = useQuery({
     queryKey: ["order", orderId],
-    queryFn: () => base44.entities.Order.filter({ id: orderId }),
+    queryFn: async () => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", orderId)
+    .single();
+
+  if (error) throw error;
+  return data;
+},
     enabled: !!orderId,
   });
 
   useEffect(() => {
-    if (existingOrder && existingOrder.length > 0) {
-      const o = existingOrder[0];
+    if (existingOrder) {
+      const o = existingOrder;
       const loaded = {
         title: o.title || "",
         client_id: o.client_id || "",
