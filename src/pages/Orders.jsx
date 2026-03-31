@@ -31,15 +31,34 @@ export default function Orders() {
   const toggleCol = (col) => setVisibleCols(prev => ({ ...prev, [col]: !prev[col] }));
   const queryClient = useQueryClient();
 
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ["orders"],
-    queryFn: () => base44.entities.Order.list("-created_date"),
-  });
+const { data: orders = [], isLoading } = useQuery({
+  queryKey: ["orders"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Order.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["orders"] }),
-  });
+    if (error) {
+      console.error(error);
+      return [];
+    }
+
+    return data;
+  },
+});
+
+const deleteMutation = useMutation({
+  mutationFn: async (id) => {
+    const { error } = await supabase
+      .from("orders")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+  },
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ["orders"] }),
+});
 
   const filtered = orders.filter(o => {
     const matchSearch = !search || o.title?.toLowerCase().includes(search.toLowerCase()) || o.client_name?.toLowerCase().includes(search.toLowerCase());
