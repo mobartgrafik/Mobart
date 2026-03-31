@@ -23,20 +23,38 @@ const handleSave = async () => {
   if (!form.name) return;
   setSaving(true);
 
-  if (client) {
-    await supabase
-      .from("clients")
-      .update(form)
-      .eq("id", client.id);
-  } else {
-    await supabase
-      .from("clients")
-      .insert([form]);
+  try {
+    if (client) {
+      const { error } = await supabase
+        .from("clients")
+        .update({
+          name: form.name,
+          phone: form.phone,
+          email: form.email,
+          notes: form.notes
+        })
+        .eq("id", client.id)
+        .select();
+
+      if (error) console.error(error);
+
+    } else {
+      const { error } = await supabase
+        .from("clients")
+        .insert([form])
+        .select();
+
+      if (error) console.error(error);
+    }
+
+    onSaved();
+    onOpenChange(false);
+
+  } catch (err) {
+    console.error(err);
   }
 
   setSaving(false);
-  onSaved();
-  onOpenChange(false);
 };
 
   return (
