@@ -188,14 +188,14 @@ newFiles.push({
             await supabase
   .from("order_comments")
   .insert([{
-              order_id: orderId,
-              type: "history",
-              content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-              author: "Użytkownik",
-              field_changed: field,
-              old_value: oldVal,
-              new_value: newVal,
-            });
+    order_id: orderId,
+    type: "history",
+    content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+    author: "Użytkownik",
+    field_changed: field,
+    old_value: oldVal,
+    new_value: newVal,
+  }]);
           }
         }
       }
