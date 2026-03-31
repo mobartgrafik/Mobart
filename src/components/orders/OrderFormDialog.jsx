@@ -78,8 +78,6 @@ const handleSave = async () => {
       files: form.files || []
     };
 
-    console.log("Saving order:", data);
-
     if (order) {
       const { error } = await supabase
         .from("orders")
@@ -95,6 +93,16 @@ const handleSave = async () => {
 
       if (error) throw error;
     }
+
+    onSaved();
+    onOpenChange(false);
+
+  } catch (err) {
+    console.error("Order save error:", err);
+  }
+
+  setSaving(false);
+};
 
     onSaved();
     onOpenChange(false);
