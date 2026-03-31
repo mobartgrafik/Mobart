@@ -64,10 +64,46 @@ const handleSave = async () => {
 
   try {
     const client = clients.find(c => c.id === Number(form.client_id));
+
     const data = {
-  ...form,
-  client_id: Number(form.client_id),
-  client_name: client?.name || ""
+      title: form.title,
+      client_id: Number(form.client_id),
+      client_name: client?.name || "",
+      status: form.status,
+      priority: form.priority,
+      deadline: form.deadline || null,
+      assignee: form.assignee || "",
+      printType: form.print_type || "",
+      notes: form.description || "",
+      files: form.files || []
+    };
+
+    console.log("Saving order:", data);
+
+    if (order) {
+      const { error } = await supabase
+        .from("orders")
+        .update(data)
+        .eq("id", order.id);
+
+      if (error) throw error;
+
+    } else {
+      const { error } = await supabase
+        .from("orders")
+        .insert([data]);
+
+      if (error) throw error;
+    }
+
+    onSaved();
+    onOpenChange(false);
+
+  } catch (err) {
+    console.error("Order save error:", err);
+  }
+
+  setSaving(false);
 };
 
     if (order) {
