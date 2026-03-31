@@ -158,38 +158,76 @@ const handleFileUpload = async (e) => {
   const TRACKED_FIELDS = ["status", "priority", "assignee", "graphic", "deadline", "print_date", "settlement", "channel", "meters", "price", "print_type", "title"];
   const FIELD_LABELS_SAVE = { status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik", deadline: "Termin", print_date: "Data wydruku", settlement: "Rozliczenie", channel: "Kanał", meters: "Metry (m²)", price: "Cena", print_type: "Produkt", title: "Nazwa zlecenia" };
 
-  const handleSave = async (andNew = false) => {
-    if (!form.title || !form.client_id) return;
-    setSaving(true);
+const handleSave = async (andNew = false) => {
+  if (!form.title || !form.client_id) return;
+
+  setSaving(true);
+
+  try {
     const client = clients.find(c => String(c.id) === String(form.client_id));
+
     const data = {
       ...form,
       client_name: client?.name || "",
       meters: form.meters ? parseFloat(form.meters) : null,
       price: form.price ? parseFloat(form.price) : null,
     };
+
     if (orderId) {
-      if (orderId) {
-  const { error } = await supabase
-    .from("orders")
-    .update(data)
-    .eq("id", orderId);
+      const { error } = await supabase
+        .from("orders")
+        .update(data)
+        .eq("id", orderId);
 
-  if (error) throw error;
+      if (error) throw error;
 
-} else {
-  const { error } = await supabase
-    .from("orders")
-    .insert([data]);
-
-  if (error) throw error;
-}
-      // Record history for changed fields
+      // Historia zmian
       if (originalForm) {
         for (const field of TRACKED_FIELDS) {
           const oldVal = String(originalForm[field] ?? "");
           const newVal = String(form[field] ?? "");
+
           if (oldVal !== newVal) {
+            await supabase
+              .from("order_comments")
+              .insert([
+                {
+                  order_id: orderId,
+                  type: "history",
+                  content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+                  author: "Użytkownik",
+                  field_changed: field,
+                  old_value: oldVal,
+                  new_value: newVal,
+                }
+              ]);
+          }
+        }
+      }
+
+    } else {
+      const { error } = await supabase
+        .from("orders")
+        .insert([data]);
+
+      if (error) throw error;
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+
+    if (andNew) {
+      setForm(emptyForm);
+      navigate(createPageUrl("OrderForm"));
+    } else {
+      navigate(createPageUrl("Orders"));
+    }
+
+  } catch (err) {
+    console.error("Order save error:", err);
+  }
+
+  setSaving(false);
+};
 await supabase
   .from("order_comments")
   .insert([
