@@ -181,15 +181,15 @@ const handleFileUpload = async (e) => {
       price: form.price ? parseFloat(form.price) : null,
     };
     if (orderId) {
-      const { error } = await supabase
-  .from("orders")
-  .insert([data]);
+  const { error } = await supabase
+    .from("orders")
+    .update(data)
+    .eq("id", orderId);
 
-if (error) {
-  console.error("SUPABASE ERROR:", error);
-  alert(error.message);
-}
-  .eq("id", orderId);
+  if (error) {
+    console.error("SUPABASE ERROR:", error);
+    alert(error.message);
+  }
       // Record history for changed fields
       if (originalForm) {
         for (const field of TRACKED_FIELDS) {
@@ -211,9 +211,14 @@ if (error) {
         }
       }
     } else {
-      await supabase
+      const { error } = await supabase
   .from("orders")
   .insert([data]);
+
+if (error) {
+  console.error("SUPABASE ERROR:", error);
+  alert(error.message);
+}
     }
     queryClient.invalidateQueries({ queryKey: ["orders"] });
     setSaving(false);
