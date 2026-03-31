@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/supabase";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,14 +41,38 @@ export default function OrderForm() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => base44.entities.Client.list(),
-  });
+const { data: clients = [] } = useQuery({
+  queryKey: ["clients"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return [];
+    }
+
+    return data;
+  },
+});
 
   const { data: existingOrder, isLoading } = useQuery({
     queryKey: ["order", orderId],
-    queryFn: () => base44.entities.Order.filter({ id: orderId }),
+    queryFn: async () => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", orderId);
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return data;
+},
     enabled: !!orderId,
   });
 
@@ -113,18 +137,21 @@ export default function OrderForm() {
     });
   };
 
-  const handleFileUpload = async (e) => {
-    const fileList = Array.from(e.target.files);
-    if (!fileList.length) return;
-    setUploading(true);
-    const newFiles = [];
-    for (const file of fileList) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      newFiles.push({ name: file.name, url: file_url, type: file.type });
-    }
-    setForm(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
-    setUploading(false);
-  };
+const handleFileUpload = async (e) => {
+  const fileList = Array.from(e.target.files);
+  if (!fileList.length) return;
+
+  const newFiles = fileList.map(file => ({
+    name: file.name,
+    url: "",
+    type: file.type
+  }));
+
+  setForm(prev => ({
+    ...prev,
+    files: [...prev.files, ...newFiles]
+  }));
+};
 
   const removeFile = (idx) => setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
 
@@ -134,7 +161,7 @@ export default function OrderForm() {
   const handleSave = async (andNew = false) => {
     if (!form.title || !form.client_id) return;
     setSaving(true);
-    const client = clients.find(c => c.id === form.client_id);
+    const client = clients.find(c => String(c.id) === String(form.client_id));
     const data = {
       ...form,
       client_name: client?.name || "",
@@ -142,23 +169,40 @@ export default function OrderForm() {
       price: form.price ? parseFloat(form.price) : null,
     };
     if (orderId) {
-      await base44.entities.Order.update(orderId, data);
+      if (orderId) {
+  const { error } = await supabase
+    .from("orders")
+    .update(data)
+    .eq("id", orderId);
+
+  if (error) throw error;
+
+} else {
+  const { error } = await supabase
+    .from("orders")
+    .insert([data]);
+
+  if (error) throw error;
+}
       // Record history for changed fields
       if (originalForm) {
         for (const field of TRACKED_FIELDS) {
           const oldVal = String(originalForm[field] ?? "");
           const newVal = String(form[field] ?? "");
           if (oldVal !== newVal) {
-            await base44.entities.OrderComment.create({
-              order_id: orderId,
-              type: "history",
-              content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-              author: "Użytkownik",
-              field_changed: field,
-              old_value: oldVal,
-              new_value: newVal,
-            });
-          }
+await supabase
+  .from("order_comments")
+  .insert([
+    {
+      order_id: orderId,
+      type: "history",
+      content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+      author: "Użytkownik",
+      field_changed: field,
+      old_value: oldVal,
+      new_value: newVal,
+    }
+  ]);
         }
       }
     } else {
