@@ -22,14 +22,38 @@ export default function ClientDetail() {
 
 const { data: clients = [] } = useQuery({
   queryKey: ["clients"],
-  queryFn: () => base44.entities.Client.list(),
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return [];
+    }
+
+    return data;
+  },
 });
 
 const client = clients.find(c => c.id === clientId);
 
 const { data: allOrders = [] } = useQuery({
   queryKey: ["orders"],
-  queryFn: () => base44.entities.Order.list("-created_date"),
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return [];
+    }
+
+    return data;
+  },
 });
 
   const clientOrders = allOrders.filter(o => o.client_id === clientId);
