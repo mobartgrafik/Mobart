@@ -60,6 +60,7 @@ const handleFileUpload = async (e) => {
 
 const handleSave = async () => {
   if (!form.title || !form.client_id) return;
+
   setSaving(true);
 
   try {
@@ -77,42 +78,6 @@ const handleSave = async () => {
       notes: form.description || "",
       files: form.files || []
     };
-
-    if (order) {
-      const { error } = await supabase
-        .from("orders")
-        .update(data)
-        .eq("id", order.id);
-
-      if (error) throw error;
-
-    } else {
-      const { error } = await supabase
-        .from("orders")
-        .insert([data]);
-
-      if (error) throw error;
-    }
-
-    onSaved();
-    onOpenChange(false);
-
-  } catch (err) {
-    console.error("Order save error:", err);
-  }
-
-  setSaving(false);
-};
-
-    onSaved();
-    onOpenChange(false);
-
-  } catch (err) {
-    console.error("Order save error:", err);
-  }
-
-  setSaving(false);
-};
 
     if (order) {
       const { error } = await supabase
