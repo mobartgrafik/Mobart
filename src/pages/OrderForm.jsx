@@ -77,7 +77,7 @@ const { data, error } = await supabase
         client_id: o.client_id || "",
         status: o.status || "Nowe",
         priority: o.priority || "średni",
-        print_type: o.print_type || "",
+        print_type: o.printType || "",
         channel: o.channel || "Mobart",
         graphic: o.graphic || "",
         assignee: o.assignee || "",
@@ -170,16 +170,25 @@ const handleFileUpload = async (e) => {
   const TRACKED_FIELDS = ["status", "priority", "assignee", "graphic", "deadline", "print_date", "settlement", "channel", "meters", "price", "print_type", "title"];
   const FIELD_LABELS_SAVE = { status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik", deadline: "Termin", print_date: "Data wydruku", settlement: "Rozliczenie", channel: "Kanał", meters: "Metry (m²)", price: "Cena", print_type: "Produkt", title: "Nazwa zlecenia" };
 
-  const handleSave = async (andNew = false) => {
-    if (!form.title || !form.client_id) return;
-    setSaving(true);
-    const client = clients.find(c => c.id === form.client_id);
-    const data = {
-      ...form,
-      client_name: client?.name || "",
-      meters: form.meters ? parseFloat(form.meters) : null,
-      price: form.price ? parseFloat(form.price) : null,
-    };
+const handleSave = async (andNew = false) => {
+  if (!form.title || !form.client_id) return;
+  setSaving(true);
+
+  const client = clients.find(c => c.id === form.client_id);
+
+  const data = {
+    ...form,
+    client_name: client?.name || "",
+    printType: form.print_type,
+    meters: form.meters ? parseFloat(form.meters) : null,
+    price: form.price ? parseFloat(form.price) : null,
+    deadline: form.deadline || null,
+    print_date: form.print_date || null
+  };
+
+  delete data.print_type;
+
+delete data.print_type;
     if (orderId) {
   const { error } = await supabase
     .from("orders")
