@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,18 +15,43 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ["clients"],
-    queryFn: () => base44.entities.Client.list("-created_date"),
-  });
+const { data: clients = [], isLoading } = useQuery({
+  queryKey: ["clients"],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      return [];
+    }
+
+    return data;
+  },
+});
 
   const { data: orders = [] } = useQuery({
     queryKey: ["orders"],
-    queryFn: () => base44.entities.Order.list(),
+    queryFn: async () => {
+  const { data } = await supabase
+    .from("orders")
+    .select("*");
+
+  return data || [];
+},
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Client.delete(id),
+    mutationFn: async (id) => {
+  const { error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+},
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["clients"] }),
   });
 
