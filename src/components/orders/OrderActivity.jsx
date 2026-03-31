@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,23 +28,45 @@ export default function OrderActivity({ orderId }) {
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["order-comments", orderId],
-    queryFn: () => base44.entities.OrderComment.filter({ order_id: orderId }, "created_date"),
+    queryFn: async () => {
+  const { data, error } = await supabase
+    .from("order_comments")
+    .select("*")
+    .eq("order_id", orderId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return [];
+  }
+
+  return data;
+},
     enabled: !!orderId,
   });
 
   const addComment = useMutation({
     mutationFn: (content) =>
-      base44.entities.OrderComment.create({
-        order_id: orderId,
-        content,
-        type: "comment",
-        author: "Użytkownik",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["order-comments", orderId] });
-      setComment("");
-    },
-  });
+      const addComment = useMutation({
+  mutationFn: async (content) => {
+    const { error } = await supabase
+      .from("order_comments")
+      .insert([
+        {
+          order_id: orderId,
+          content,
+          type: "comment",
+          author: "Użytkownik"
+        }
+      ]);
+
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["order-comments", orderId] });
+    setComment("");
+  },
+});
 
   const handleSubmit = () => {
     if (!comment.trim()) return;
@@ -103,7 +125,7 @@ export default function OrderActivity({ orderId }) {
                   <span className="text-xs font-medium text-zinc-400">
                     {entry.author || "System"}
                   </span>
-                  <span className="text-xs text-zinc-600">{formatDate(entry.created_date)}</span>
+                  <span className="text-xs text-zinc-600">{formatDate(entry.created_at)}</span>
                 </div>
                 {entry.type === "comment" ? (
                   <p className="text-sm text-zinc-200 bg-zinc-800/60 rounded-lg px-3 py-2">
