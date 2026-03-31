@@ -167,11 +167,31 @@ const handleSave = async (andNew = false) => {
     const client = clients.find(c => String(c.id) === String(form.client_id));
 
     const data = {
-      ...form,
-      client_name: client?.name || "",
-      meters: form.meters ? parseFloat(form.meters) : null,
-      price: form.price ? parseFloat(form.price) : null,
-    };
+  title: form.title,
+  client_id: Number(form.client_id),
+  client_name: client?.name || "",
+
+  status: form.status,
+  priority: form.priority,
+
+  print_type: form.print_type || "",
+  channel: form.channel || "",
+
+  graphic: form.graphic || "",
+  assignee: form.assignee || "",
+
+  deadline: form.deadline || null,
+  print_date: form.print_date || null,
+
+  description: form.description || "",
+
+  meters: form.meters ? parseFloat(form.meters) : null,
+  price: form.price ? parseFloat(form.price) : null,
+
+  settlement: form.settlement || "nierozliczone",
+
+  files: form.files || []
+};
 
     if (orderId) {
       const { error } = await supabase
