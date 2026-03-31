@@ -55,20 +55,39 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
     setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
   };
 
-  const handleSave = async () => {
-    if (!form.title || !form.client_id) return;
-    setSaving(true);
+const handleSave = async () => {
+  if (!form.title || !form.client_id) return;
+  setSaving(true);
+
+  try {
     const client = clients.find(c => c.id === form.client_id);
     const data = { ...form, client_name: client?.name || "" };
+
     if (order) {
-      await base44.entities.Order.update(order.id, data);
+      const { error } = await supabase
+        .from("orders")
+        .update(data)
+        .eq("id", order.id);
+
+      if (error) throw error;
+
     } else {
-      await base44.entities.Order.create(data);
+      const { error } = await supabase
+        .from("orders")
+        .insert([data]);
+
+      if (error) throw error;
     }
-    setSaving(false);
+
     onSaved();
     onOpenChange(false);
-  };
+
+  } catch (err) {
+    console.error("Order save error:", err);
+  }
+
+  setSaving(false);
+};
 
   const getFileIcon = (type) => {
     if (type?.startsWith("image")) return <Image className="w-4 h-4 text-purple-400" />;
