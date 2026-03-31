@@ -64,7 +64,11 @@ const handleSave = async () => {
 
   try {
     const client = clients.find(c => c.id === Number(form.client_id));
-    const data = { ...form, client_name: client?.name || "" };
+    const data = {
+  ...form,
+  client_id: Number(form.client_id),
+  client_name: client?.name || ""
+};
 
     if (order) {
       const { error } = await supabase
