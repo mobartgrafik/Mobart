@@ -38,18 +38,21 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
     }
   }, [order, open]);
 
-  const handleFileUpload = async (e) => {
-    const fileList = Array.from(e.target.files);
-    if (!fileList.length) return;
-    setUploading(true);
-    const newFiles = [];
-    for (const file of fileList) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      newFiles.push({ name: file.name, url: file_url, type: file.type });
-    }
-    setForm(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
-    setUploading(false);
-  };
+const handleFileUpload = async (e) => {
+  const fileList = Array.from(e.target.files);
+  if (!fileList.length) return;
+
+  const newFiles = fileList.map(file => ({
+    name: file.name,
+    url: "",
+    type: file.type
+  }));
+
+  setForm(prev => ({
+    ...prev,
+    files: [...prev.files, ...newFiles]
+  }));
+};
 
   const removeFile = (idx) => {
     setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
