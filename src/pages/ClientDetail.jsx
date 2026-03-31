@@ -37,7 +37,7 @@ const { data: clients = [] } = useQuery({
   },
 });
 
-const client = clients.find(c => c.id === clientId);
+const client = clients.find(c => c.id === Number(clientId));
 
 const { data: allOrders = [] } = useQuery({
   queryKey: ["orders"],
@@ -56,7 +56,7 @@ const { data: allOrders = [] } = useQuery({
   },
 });
 
-  const clientOrders = allOrders.filter(o => o.client_id === clientId);
+  const clientOrders = allOrders.filter(o => o.client_id === Number(clientId));
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["clients"] });
