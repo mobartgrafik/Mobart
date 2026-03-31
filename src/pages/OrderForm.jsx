@@ -136,7 +136,23 @@ export default function OrderForm() {
     setUploading(true);
     const newFiles = [];
     for (const file of fileList) {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const fileName = `${Date.now()}-${file.name}`;
+
+const { error } = await supabase.storage
+  .from("order-files")
+  .upload(fileName, file);
+
+if (error) throw error;
+
+const { data } = supabase.storage
+  .from("order-files")
+  .getPublicUrl(fileName);
+
+newFiles.push({
+  name: file.name,
+  url: data.publicUrl,
+  type: file.type
+});
       newFiles.push({ name: file.name, url: file_url, type: file.type });
     }
     setForm(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
@@ -159,14 +175,19 @@ export default function OrderForm() {
       price: form.price ? parseFloat(form.price) : null,
     };
     if (orderId) {
-      await base44.entities.Order.update(orderId, data);
+      await supabase
+  .from("orders")
+  .update(data)
+  .eq("id", orderId);
       // Record history for changed fields
       if (originalForm) {
         for (const field of TRACKED_FIELDS) {
           const oldVal = String(originalForm[field] ?? "");
           const newVal = String(form[field] ?? "");
           if (oldVal !== newVal) {
-            await base44.entities.OrderComment.create({
+            await supabase
+  .from("order_comments")
+  .insert([{
               order_id: orderId,
               type: "history",
               content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
@@ -179,7 +200,9 @@ export default function OrderForm() {
         }
       }
     } else {
-      await base44.entities.Order.create(data);
+      await supabase
+  .from("orders")
+  .insert([data]);
     }
     queryClient.invalidateQueries({ queryKey: ["orders"] });
     setSaving(false);
