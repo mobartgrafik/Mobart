@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "@/supabase";
+import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,38 +41,14 @@ export default function OrderForm() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-const { data: clients = [] } = useQuery({
-  queryKey: ["clients"],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from("clients")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error(error);
-      return [];
-    }
-
-    return data;
-  },
-});
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => base44.entities.Client.list(),
+  });
 
   const { data: existingOrder, isLoading } = useQuery({
     queryKey: ["order", orderId],
-    queryFn: async () => {
-  const { data, error } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("id", orderId);
-
-  if (error) {
-    console.error(error);
-    return [];
-  }
-
-  return data;
-},
+    queryFn: () => base44.entities.Order.filter({ id: orderId }),
     enabled: !!orderId,
   });
 
@@ -137,117 +113,67 @@ const { data: clients = [] } = useQuery({
     });
   };
 
-const handleFileUpload = async (e) => {
-  const fileList = Array.from(e.target.files);
-  if (!fileList.length) return;
-
-  const newFiles = fileList.map(file => ({
-    name: file.name,
-    url: "",
-    type: file.type
-  }));
-
-  setForm(prev => ({
-    ...prev,
-    files: [...prev.files, ...newFiles]
-  }));
-};
+  const handleFileUpload = async (e) => {
+    const fileList = Array.from(e.target.files);
+    if (!fileList.length) return;
+    setUploading(true);
+    const newFiles = [];
+    for (const file of fileList) {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      newFiles.push({ name: file.name, url: file_url, type: file.type });
+    }
+    setForm(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
+    setUploading(false);
+  };
 
   const removeFile = (idx) => setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
 
   const TRACKED_FIELDS = ["status", "priority", "assignee", "graphic", "deadline", "print_date", "settlement", "channel", "meters", "price", "print_type", "title"];
   const FIELD_LABELS_SAVE = { status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik", deadline: "Termin", print_date: "Data wydruku", settlement: "Rozliczenie", channel: "Kanał", meters: "Metry (m²)", price: "Cena", print_type: "Produkt", title: "Nazwa zlecenia" };
 
-const handleSave = async (andNew = false) => {
-  if (!form.title || !form.client_id) return;
-
-  setSaving(true);
-
-  try {
-    const client = clients.find(c => String(c.id) === String(form.client_id));
-
+  const handleSave = async (andNew = false) => {
+    if (!form.title || !form.client_id) return;
+    setSaving(true);
+    const client = clients.find(c => c.id === form.client_id);
     const data = {
-  title: form.title,
-  client_id: Number(form.client_id),
-  client_name: client?.name || "",
-
-  status: form.status,
-  priority: form.priority,
-
-  print_type: form.print_type || "",
-  channel: form.channel || "",
-
-  graphic: form.graphic || "",
-  assignee: form.assignee || "",
-
-  deadline: form.deadline || null,
-  print_date: form.print_date || null,
-
-  description: form.description || "",
-
-  meters: form.meters ? parseFloat(form.meters) : null,
-  price: form.price ? parseFloat(form.price) : null,
-
-  settlement: form.settlement || "nierozliczone",
-
-  files: form.files || []
-};
-
+      ...form,
+      client_name: client?.name || "",
+      meters: form.meters ? parseFloat(form.meters) : null,
+      price: form.price ? parseFloat(form.price) : null,
+    };
     if (orderId) {
-      const { error } = await supabase
-        .from("orders")
-        .update(data)
-        .eq("id", orderId);
-
-      if (error) throw error;
-
-      // Historia zmian
+      await base44.entities.Order.update(orderId, data);
+      // Record history for changed fields
       if (originalForm) {
         for (const field of TRACKED_FIELDS) {
           const oldVal = String(originalForm[field] ?? "");
           const newVal = String(form[field] ?? "");
-
           if (oldVal !== newVal) {
-            await supabase
-              .from("order_comments")
-              .insert([
-                {
-                  order_id: orderId,
-                  type: "history",
-                  content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-                  author: "Użytkownik",
-                  field_changed: field,
-                  old_value: oldVal,
-                  new_value: newVal,
-                }
-              ]);
+            await base44.entities.OrderComment.create({
+              order_id: orderId,
+              type: "history",
+              content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+              author: "Użytkownik",
+              field_changed: field,
+              old_value: oldVal,
+              new_value: newVal,
+            });
           }
         }
       }
-
     } else {
-      const { error } = await supabase
-        .from("orders")
-        .insert([data]);
-
-      if (error) throw error;
+      await base44.entities.Order.create(data);
     }
-
     queryClient.invalidateQueries({ queryKey: ["orders"] });
-
+    setSaving(false);
     if (andNew) {
       setForm(emptyForm);
       navigate(createPageUrl("OrderForm"));
     } else {
       navigate(createPageUrl("Orders"));
     }
+  };
 
-  } catch (err) {
-    console.error("Order save error:", err);
-  }
-
-  setSaving(false);
-};
   const getFileIcon = (type) => {
     if (type?.startsWith("image")) return <Image className="w-4 h-4 text-purple-400" />;
     return <FileText className="w-4 h-4 text-blue-400" />;
