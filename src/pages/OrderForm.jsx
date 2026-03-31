@@ -181,9 +181,14 @@ const handleFileUpload = async (e) => {
       price: form.price ? parseFloat(form.price) : null,
     };
     if (orderId) {
-      await supabase
+      const { error } = await supabase
   .from("orders")
-  .update(data)
+  .insert([data]);
+
+if (error) {
+  console.error("SUPABASE ERROR:", error);
+  alert(error.message);
+}
   .eq("id", orderId);
       // Record history for changed fields
       if (originalForm) {
