@@ -29,7 +29,6 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
         <p>Brak zleceń do wyświetlenia</p>
       </div>
     );
-  }
 
   const formatDate = (d) => {
   if (!d) return "—";
