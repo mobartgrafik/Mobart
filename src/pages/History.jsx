@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "@/supabase";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { Clock, MessageSquare, RotateCcw, Search, Filter, Loader2, ArrowRight, ExternalLink } from "lucide-react";
@@ -118,15 +118,14 @@ export default function History() {
     await supabase
   .from("order_comments")
   .insert([{
-      order_id: entry.order_id,
-      type: "history",
-      content: `Cofnięto zmianę: ${FIELD_LABELS[entry.field_changed] || entry.field_changed}`,
-      author: "Użytkownik",
-      field_changed: entry.field_changed,
-      old_value: entry.new_value,
-      new_value: entry.old_value,
-    });
-
+    order_id: entry.order_id,
+    type: "history",
+    content: `Cofnięto zmianę: ${FIELD_LABELS[entry.field_changed] || entry.field_changed}`,
+    author: "Użytkownik",
+    field_changed: entry.field_changed,
+    old_value: entry.new_value,
+    new_value: entry.old_value,
+  }]);
     queryClient.invalidateQueries({ queryKey: ["all-comments"] });
     queryClient.invalidateQueries({ queryKey: ["orders"] });
     setRevertingId(null);
