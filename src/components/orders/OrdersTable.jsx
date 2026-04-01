@@ -82,7 +82,25 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
               {v.settlement && <TableCell className={`text-sm font-medium ${SETTLEMENT_COLORS[order.settlement] || "text-zinc-400"}`}>
                 {order.settlement || "—"}
               </TableCell>}
-              {v.files && <TableCell className="text-zinc-500 text-sm">{order.files?.length || 0}</TableCell>}
+              {v.files && (
+  <TableCell className="text-zinc-500 text-sm">
+    <div className="flex items-center gap-2">
+      <span>{order.files?.length || 0}</span>
+
+      {order.files?.length > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            window.open(order.files[0].url, "_blank");
+          }}
+          className="px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition"
+        >
+          Pobierz
+        </button>
+      )}
+    </div>
+  </TableCell>
+)}
               <TableCell>
                 <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800" onClick={() => onEdit(order)}>
