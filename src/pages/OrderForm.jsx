@@ -261,19 +261,11 @@ queryClient.invalidateQueries({ queryKey: ["orders"] });
 setOriginalForm(form);
 setSaving(false);
 
-if (error) {
-  console.error("SUPABASE ERROR:", error);
-  alert(error.message);
-}
-    }
-    queryClient.invalidateQueries({ queryKey: ["orders"] });
-  setOriginalForm(form);
-    setSaving(false);
-    if (andNew) {
-      setForm(emptyForm);
-      navigate(createPageUrl("OrderForm"));
-    } else {
-      navigate(createPageUrl("Orders"));
+if (andNew) {
+  setForm(emptyForm);
+  navigate(createPageUrl("OrderForm"));
+} else {
+  navigate(createPageUrl("Orders"));
     }
   };
 
