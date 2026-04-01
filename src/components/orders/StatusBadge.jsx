@@ -5,7 +5,7 @@ const statusConfig = {
   "Nowe": { bg: "bg-blue-500/20", text: "text-blue-400", dot: "bg-blue-400" },
   "W trakcie": { bg: "bg-amber-500/20", text: "text-amber-400", dot: "bg-amber-400" },
   "Do przekazania": { bg: "bg-purple-500/20", text: "text-purple-400", dot: "bg-purple-400" },
-  "Wydrukowane": { bg: "bg-emerald-500/20", text: "text-emerald-400", dot: "bg-emerald-400" },
+  "Przekazane": { bg: "bg-emerald-500/20", text: "text-emerald-400", dot: "bg-emerald-400" },
   "Zakończone": { bg: "bg-zinc-500/20", text: "text-zinc-400", dot: "bg-zinc-400" },
 };
 
