@@ -216,7 +216,6 @@ if (orderId) {
       const newVal = String(form[field] ?? "");
 
       if (oldVal !== newVal) {
-        const { error: historyError } = await supabase
   .from("order_comments")
   .insert([{
     order_id: orderId,
