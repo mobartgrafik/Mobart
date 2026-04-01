@@ -208,25 +208,26 @@ if (orderId) {
 
   // historia zmian
   if (originalForm) {
-    for (const field of TRACKED_FIELDS) {
-      const oldVal = String(originalForm[field] ?? "");
-      const newVal = String(form[field] ?? "");
+for (const field of TRACKED_FIELDS) {
+  const oldVal = String(originalForm[field] ?? "");
+  const newVal = String(form[field] ?? "");
 
-if (oldVal !== newVal) {
-  const { error: historyError } = await supabase
-    .from("order_comments")
-    .insert([{
-      order_id: orderId,
-      type: "history",
-      content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-      author: "Użytkownik",
-      field_changed: field,
-      old_value: oldVal,
-      new_value: newVal,
-    }]);
+  if (oldVal !== newVal) {
+    const { error: historyError } = await supabase
+      .from("order_comments")
+      .insert([{
+        order_id: orderId,
+        type: "history",
+        content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+        author: "Użytkownik",
+        field_changed: field,
+        old_value: oldVal,
+        new_value: newVal,
+      }]);
 
-  if (historyError) {
-    console.error("History error:", historyError);
+    if (historyError) {
+      console.error("History error:", historyError);
+    }
   }
 }
 
