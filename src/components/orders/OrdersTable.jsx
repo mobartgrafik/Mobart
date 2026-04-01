@@ -116,10 +116,9 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
     e.stopPropagation();
     downloadFile(order.files[0].url, order.files[0].name);
   }}
-  className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition"
+  className="p-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md transition"
 >
-  <Download className="w-3 h-3" />
-  Pobierz
+  <Download className="w-3.5 h-3.5" />
 </button>
       )}
     </div>
