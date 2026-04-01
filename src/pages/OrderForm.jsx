@@ -456,15 +456,25 @@ if (error) {
         </div>
         <div className="p-5 space-y-2">
           {form.files.map((f, i) => (
-            <div key={i} className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 text-sm">
-              {getFileIcon(f.type)}
-              <a href={f.url} download>
-                className="text-zinc-300 hover:text-white truncate flex-1">{f.name}</a>
-              <button onClick={() => removeFile(i)} className="text-zinc-500 hover:text-red-400">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
+  <div key={i} className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 text-sm">
+    {getFileIcon(f.type)}
+
+    <a
+      href={f.url}
+      download
+      className="text-zinc-300 hover:text-white truncate flex-1"
+    >
+      {f.name}
+    </a>
+
+    <button
+      onClick={() => removeFile(i)}
+      className="text-zinc-500 hover:text-red-400"
+    >
+      <X className="w-3.5 h-3.5" />
+    </button>
+  </div>
+))}
           <label className="flex items-center gap-2 cursor-pointer bg-zinc-800 hover:bg-zinc-750 border border-dashed border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-300">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {uploading ? "Przesyłanie..." : "Dodaj pliki (PDF, JPG, AI, PSD, CDR)"}
