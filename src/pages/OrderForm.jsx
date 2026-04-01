@@ -147,7 +147,10 @@ const handleFileUpload = async (e) => {
       .from("order-files")
       .upload(fileName, file);
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      continue;
+    }
 
     const { data } = supabase.storage
       .from("order-files")
