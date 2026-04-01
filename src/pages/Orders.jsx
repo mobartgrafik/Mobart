@@ -49,13 +49,26 @@ const { data: orders = [], isLoading } = useQuery({
 });
 
 const deleteMutation = useMutation({
-  mutationFn: async (id) => {
+  mutationFn: async (order) => {
+
+    // usuń zlecenie
     const { error } = await supabase
       .from("orders")
       .delete()
-      .eq("id", id);
+      .eq("id", order.id);
 
     if (error) throw error;
+
+    // zapisz historię
+    await supabase
+      .from("order_comments")
+      .insert([{
+        order_id: order.id,
+        type: "history",
+        content: `Usunięto zlecenie: ${order.title}`,
+        author: "Użytkownik"
+      }]);
+
   },
   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["orders"] }),
 });
@@ -68,7 +81,10 @@ const deleteMutation = useMutation({
   });
 
   const handleEdit = (order) => navigate(createPageUrl("OrderForm") + "?id=" + order.id);
-  const handleDelete = (order) => { if (confirm("Usunąć zlecenie \"" + order.title + "\"?")) deleteMutation.mutate(order.id); };
+  const handleDelete = (order) => { 
+  if (confirm("Usunąć zlecenie \"" + order.title + "\"?")) 
+    deleteMutation.mutate(order); 
+};
   const handleRefresh = () => queryClient.invalidateQueries({ queryKey: ["orders"] });
 
   return (
