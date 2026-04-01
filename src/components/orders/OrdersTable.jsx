@@ -4,6 +4,7 @@ import { pl } from "date-fns/locale";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, User, FileText } from "lucide-react";
+import { Download } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
 
@@ -88,15 +89,16 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
       <span>{order.files?.length || 0}</span>
 
       {order.files?.length > 0 && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            window.open(order.files[0].url, "_blank");
-          }}
-          className="px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition"
-        >
-          Pobierz
-        </button>
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    window.open(order.files[0].url, "_blank");
+  }}
+  className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition"
+>
+  <Download className="w-3 h-3" />
+  Pobierz
+</button>
       )}
     </div>
   </TableCell>
