@@ -193,10 +193,7 @@ const handleSave = async (andNew = false) => {
     deadline: form.deadline || null,
     print_date: form.print_date || null
   };
-
   delete data.print_type;
-
-delete data.print_type;
 if (orderId) {
 
   const { error } = await supabase
@@ -215,21 +212,22 @@ if (orderId) {
       const oldVal = String(originalForm[field] ?? "");
       const newVal = String(form[field] ?? "");
 
-      if (oldVal !== newVal) {
- const { error: historyError } = await supabase
-  .from("order_comments")
-  .insert([{
-    order_id: orderId,
-    type: "history",
-    content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-    author: "Użytkownik",
-    field_changed: field,
-    old_value: oldVal,
-    new_value: newVal,
-  }]);
+     if (oldVal !== newVal) {
+  const { error: historyError } = await supabase
+    .from("order_comments")
+    .insert([{
+      order_id: orderId,
+      type: "history",
+      content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+      author: "Użytkownik",
+      field_changed: field,
+      old_value: oldVal,
+      new_value: newVal,
+    }]);
 
-if (historyError) {
-  console.error("History error:", historyError);
+  if (historyError) {
+    console.error("History error:", historyError);
+  }
 }
             order_id: orderId,
             type: "history",
