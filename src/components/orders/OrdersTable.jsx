@@ -83,7 +83,21 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
             >
               <TableCell>{order.title}</TableCell>
               <TableCell>{order.client_name}</TableCell>
-              <TableCell><StatusBadge status={order.status} /></TableCell>
+              <TableCell>
+                import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+                const STATUSES = [
+  "Nowe",
+  "W trakcie",
+  "Do przekazania",
+  "Wydrukowane",
+  "Zakończone"
+];
+              </TableCell>
 
               {v.printType && (
                 <TableCell>
@@ -93,7 +107,8 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
 
               {v.channel && <TableCell>{order.channel || "—"}</TableCell>}
               {v.priority && <TableCell><PriorityBadge priority={order.priority} /></TableCell>}
-              {v.deadline && <TableCell>{formatDate(order.deadline)}</TableCell>}
+              {v.deadline && <TableCell>{formatDate(order.deadline)}
+              </TableCell>}
 
               {v.assignee && (
                 <TableCell>
