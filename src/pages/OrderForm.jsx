@@ -259,10 +259,12 @@ const downloadFile = async (url, name) => {
 
     const blobUrl = window.URL.createObjectURL(blob);
 
-const link = document.createElement("a");
-link.setAttribute("href", blobUrl);
-link.setAttribute("download", name);
-link.setAttribute("target", "_self");
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = name;
+    link.target = "_self";
+    link.rel = "noopener";
+    link.style.display = "none";
 
     document.body.appendChild(link);
     link.click();
