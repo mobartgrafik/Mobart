@@ -228,6 +228,7 @@ for (const field of TRACKED_FIELDS) {
     if (historyError) {
       console.error("History error:", historyError);
     }
+    }
   }
 }
 
