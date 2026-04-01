@@ -32,23 +32,23 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
   }
 
   const formatDate = (d) => {
-    const downloadFile = async (url, name) => {
+  if (!d) return "—";
+  try { return format(new Date(d), "d MMM yyyy", { locale: pl }); }
+  catch { return "—"; }
+};
+
+const downloadFile = async (url, name) => {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
 
-    const blobUrl = window.URL.createObjectURL(blob);
-
     const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = name || "plik";
-    link.style.display = "none";
+    link.href = window.URL.createObjectURL(blob);
+    link.download = name;
 
     document.body.appendChild(link);
     link.click();
-
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
+    link.remove();
 
   } catch (err) {
     console.error("Download error:", err);
