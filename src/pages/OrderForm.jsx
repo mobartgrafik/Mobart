@@ -252,18 +252,24 @@ if (error) {
     return <FileText className="w-4 h-4 text-blue-400" />;
   };
 
-  const downloadFile = async (url, name) => {
+const downloadFile = async (url, name) => {
   try {
     const response = await fetch(url);
     const blob = await response.blob();
 
+    const blobUrl = window.URL.createObjectURL(blob);
+
     const link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
+    link.href = blobUrl;
     link.download = name;
+    link.style.display = "none";
 
     document.body.appendChild(link);
     link.click();
-    link.remove();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+
   } catch (err) {
     console.error("Download error:", err);
   }
