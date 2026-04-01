@@ -258,6 +258,7 @@ if (orderId) {
 }
 
 queryClient.invalidateQueries({ queryKey: ["orders"] });
+queryClient.invalidateQueries({ queryKey: ["all-comments"] });
 setOriginalForm(form);
 setSaving(false);
 
