@@ -97,7 +97,7 @@ const { data, error } = await supabase
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
   // Parses dimensions like "100x200cm", "1.5x3m", "100x200" (assumed cm) from a string
-const parseMeersFromTitle = (title) => {
+const parseMetersFromTitle = (title) => {
   if (!title) return null;
 
   const match = title.match(
@@ -123,7 +123,7 @@ const parseMeersFromTitle = (title) => {
 
 const handleTitleChange = (val) => {
   setForm(prev => {
-    const calc = parseMeersFromTitle(val);
+    const calc = parseMetersFromTitle(val);
 
     return {
       ...prev,
