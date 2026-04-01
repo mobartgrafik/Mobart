@@ -70,7 +70,10 @@ const deleteMutation = useMutation({
       }]);
 
   },
-  onSuccess: () => queryClient.invalidateQueries({ queryKey: ["orders"] }),
+ onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ["orders"] });
+  queryClient.invalidateQueries({ queryKey: ["all-comments"] });
+},
 });
 
   const filtered = orders.filter(o => {
