@@ -252,6 +252,23 @@ if (error) {
     return <FileText className="w-4 h-4 text-blue-400" />;
   };
 
+  const downloadFile = async (url, name) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    const link = document.createElement("a");
+    link.href = window.URL.createObjectURL(blob);
+    link.download = name;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    console.error("Download error:", err);
+  }
+};
+
   if (isLoading) return <div className="text-center py-20 text-zinc-500">Ładowanie...</div>;
 
   return (
@@ -456,16 +473,24 @@ if (error) {
         </div>
         <div className="p-5 space-y-2">
           {form.files.map((f, i) => (
-  <div key={i} className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 text-sm">
+  <div
+    key={i}
+    className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 text-sm"
+  >
     {getFileIcon(f.type)}
 
-    <a
-      href={f.url}
-      download
-      className="text-zinc-300 hover:text-white truncate flex-1"
-    >
+    <span className="text-zinc-300 truncate flex-1">
       {f.name}
-    </a>
+    </span>
+
+    <Button
+      size="sm"
+      variant="ghost"
+      onClick={() => downloadFile(f.url, f.name)}
+      className="text-blue-400 hover:text-blue-300"
+    >
+      Pobierz
+    </Button>
 
     <button
       onClick={() => removeFile(i)}
