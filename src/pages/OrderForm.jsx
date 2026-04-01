@@ -221,8 +221,11 @@ if (orderId) {
   .insert([{
     order_id: orderId,
     type: "history",
-    content: "Utworzono zlecenie",
-    author: "Użytkownik"
+    content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+    author: "Użytkownik",
+    field_changed: field,
+    old_value: oldVal,
+    new_value: newVal,
   }]);
 
 if (historyError) {
