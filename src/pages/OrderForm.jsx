@@ -229,17 +229,6 @@ if (oldVal !== newVal) {
     console.error("History error:", historyError);
   }
 }
-            order_id: orderId,
-            type: "history",
-            content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-            author: "Użytkownik",
-            field_changed: field,
-            old_value: oldVal,
-            new_value: newVal,
-          }]);
-      }
-    }
-  }
 
 } else {
 
