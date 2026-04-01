@@ -228,7 +228,6 @@ if (orderId) {
   if (historyError) {
     console.error("History error:", historyError);
   }
-}
             order_id: orderId,
             type: "history",
             content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
