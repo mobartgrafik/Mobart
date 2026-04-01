@@ -30,7 +30,7 @@ const STATUSES = [
 "Nowe",
 "W trakcie",
 "Do przekazania",
-"Wydrukowane",
+"Przekazane",
 "Zakończone"
 ];
 
