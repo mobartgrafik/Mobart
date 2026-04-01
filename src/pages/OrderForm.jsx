@@ -216,9 +216,18 @@ if (orderId) {
       const newVal = String(form[field] ?? "");
 
       if (oldVal !== newVal) {
-        await supabase
-          .from("order_comments")
-          .insert([{
+        const { error: historyError } = await supabase
+  .from("order_comments")
+  .insert([{
+    order_id: orderId,
+    type: "history",
+    content: "Utworzono zlecenie",
+    author: "Użytkownik"
+  }]);
+
+if (historyError) {
+  console.error("History error:", historyError);
+}
             order_id: orderId,
             type: "history",
             content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
