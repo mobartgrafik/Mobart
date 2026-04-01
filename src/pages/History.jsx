@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
@@ -28,7 +28,7 @@ function groupBySession(entries) {
       current.type === "history" &&
       current.author === e.author &&
       current.order_id === e.order_id &&
-      Math.abs(new Date(e.created_date) - new Date(current.entries[current.entries.length - 1].created_date)) < 60000
+      Math.abs(new Date(e.created_at) - new Date(current.entries[current.entries.length - 1].created_at)) < 60000
     ) {
       current.entries.push(e);
     } else {
@@ -38,7 +38,7 @@ function groupBySession(entries) {
         author: e.author,
         order_id: e.order_id,
         order_title: e.order_title,
-        created_date: e.created_date,
+        created_at: e.created_at,
         entries: [e],
       };
       groups.push(current);
@@ -56,12 +56,27 @@ export default function History() {
 
   const { data: rawComments = [], isLoading: loadingComments } = useQuery({
     queryKey: ["all-comments"],
-    queryFn: () => base44.entities.OrderComment.list("-created_date", 200),
+    queryFn: async () => {
+  const { data, error } = await supabase
+    .from("order_comments")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data;
+},
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ["orders"],
-    queryFn: () => base44.entities.Order.list(),
+    queryFn: async () => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*");
+
+  if (error) throw error;
+  return data;
+},
   });
 
   // Enrich comments with order titles
@@ -94,10 +109,15 @@ export default function History() {
       ? (entry.old_value ? parseFloat(entry.old_value) : null)
       : entry.old_value;
 
-    await base44.entities.Order.update(entry.order_id, { [entry.field_changed]: revertValue });
+    await supabase
+  .from("orders")
+  .update({ [entry.field_changed]: revertValue })
+  .eq("id", entry.order_id);
 
     // Log the revert as a history entry
-    await base44.entities.OrderComment.create({
+    await supabase
+  .from("order_comments")
+  .insert([{
       order_id: entry.order_id,
       type: "history",
       content: `Cofnięto zmianę: ${FIELD_LABELS[entry.field_changed] || entry.field_changed}`,
@@ -121,7 +141,7 @@ export default function History() {
 
   const dayGroups = {};
   filtered.forEach(c => {
-    const day = c.created_date ? format(new Date(c.created_date), "d MMMM yyyy", { locale: pl }) : "Brak daty";
+    const day = c.created_at ? format(new Date(c.created_at), "d MMMM yyyy", { locale: pl }) : "Brak daty";
     if (!dayGroups[day]) dayGroups[day] = [];
     dayGroups[day].push(c);
   });
@@ -210,7 +230,7 @@ function HistoryRow({ entry, onRevert, revertingId, formatDate, navigate }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap mb-1">
           <span className="text-xs font-semibold text-zinc-300">{entry.author || "System"}</span>
-          <span className="text-xs text-zinc-600">{formatDate(entry.created_date)}</span>
+          <span className="text-xs text-zinc-600">{formatDate(entry.created_at)}</span>
           <button
             onClick={() => navigate(createPageUrl("OrderForm") + "?id=" + entry.order_id)}
             className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-400 transition-colors"
