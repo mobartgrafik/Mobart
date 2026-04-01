@@ -92,7 +92,7 @@ const { data, error } = await supabase
       setForm(loaded);
       setOriginalForm(loaded);
     }
-  }, [existingOrder]);
+  }, [existingOrder, clients]);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -299,7 +299,10 @@ if (error) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Klient *</Label>
-              <Select value={form.client_id} onValueChange={v => set("client_id", v)}>
+              <Select
+  value={form.client_id || ""}
+  onValueChange={v => set("client_id", v)}
+>
                 <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
                   <SelectValue placeholder="Wybierz klienta" />
                 </SelectTrigger>
