@@ -308,7 +308,7 @@ if (error) {
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
                   {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id} className="text-zinc-100 focus:bg-zinc-700">{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={String(c.id)} className="text-zinc-100 focus:bg-zinc-700">{c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
