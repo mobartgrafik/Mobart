@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload, X, FileText, Image } from "lucide-react";
 import PrintTypeSelect from "./PrintTypeSelect";
 
-const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
+const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Przekazane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
 
 export default function OrderFormDialog({ open, onOpenChange, order, clients, onSaved }) {
