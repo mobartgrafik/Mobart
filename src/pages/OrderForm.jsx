@@ -74,7 +74,7 @@ const { data, error } = await supabase
       const o = existingOrder;
       const loaded = {
         title: o.title || "",
-        client_id: String(o.client_id || ""),
+        client_id: o.client_id?.toString() || "",
         status: o.status || "Nowe",
         priority: o.priority || "średni",
         print_type: o.printType || "",
