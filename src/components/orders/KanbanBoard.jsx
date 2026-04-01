@@ -6,13 +6,13 @@ import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
 import { User, Calendar, FileText } from "lucide-react";
 
-const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
+const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Przekazane", "Zakończone"];
 
 const columnColors = {
   "Nowe": "border-t-blue-500",
   "W trakcie": "border-t-amber-500",
   "Do przekazania": "border-t-purple-500",
-  "Wydrukowane": "border-t-emerald-500",
+  "Przekazane": "border-t-emerald-500",
   "Zakończone": "border-t-zinc-500",
 };
 
