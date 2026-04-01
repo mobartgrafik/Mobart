@@ -233,9 +233,28 @@ if (originalForm) {
   }
 }
     } else {
-      const { error } = await supabase
-  .from("orders")
-  .insert([data]);
+  const { data: inserted, error } = await supabase
+    .from("orders")
+    .insert([data])
+    .select()
+    .single();
+
+  if (error) {
+    console.error("SUPABASE ERROR:", error);
+    alert(error.message);
+  }
+
+  if (inserted) {
+    await supabase
+      .from("order_comments")
+      .insert([{
+        order_id: inserted.id,
+        type: "history",
+        content: "Utworzono zlecenie",
+        author: "Użytkownik"
+      }]);
+  }
+}
 
 if (error) {
   console.error("SUPABASE ERROR:", error);
