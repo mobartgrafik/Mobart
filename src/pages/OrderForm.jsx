@@ -177,7 +177,9 @@ const handleSave = async (andNew = false) => {
   if (!form.title || !form.client_id) return;
   setSaving(true);
 
-  const client = clients.find(c => c.id === form.client_id);
+  const client = clients.find(
+  c => String(c.id) === String(form.client_id)
+);
 
   const data = {
     ...form,
