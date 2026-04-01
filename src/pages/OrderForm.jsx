@@ -97,38 +97,41 @@ const { data, error } = await supabase
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
 
   // Parses dimensions like "100x200cm", "1.5x3m", "100x200" (assumed cm) from a string
-  const parseMeersFromTitle = (title) => {
-    // match NUM x NUM followed optionally by cm or m (with word boundary)
-    const match = title.match(/(\d+(?:[.,]\d+)?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)\s*(cm|m)\b/i);
-    if (match) {
-      let w = parseFloat(match[1].replace(",", "."));
-      let h = parseFloat(match[2].replace(",", "."));
-      const unit = match[3].toLowerCase();
-      if (unit === "cm") return parseFloat(((w / 100) * (h / 100)).toFixed(4));
-      return parseFloat((w * h).toFixed(4)); // already meters
-    }
-    // No unit — assume cm if both numbers look like centimetres (> 1)
-    const matchNoUnit = title.match(/(\d+(?:[.,]\d+)?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)/i);
-    if (matchNoUnit) {
-      let w = parseFloat(matchNoUnit[1].replace(",", "."));
-      let h = parseFloat(matchNoUnit[2].replace(",", "."));
-      // assume cm
-      return parseFloat(((w / 100) * (h / 100)).toFixed(4));
-    }
-    return null;
-  };
+const parseMeersFromTitle = (title) => {
+  if (!title) return null;
 
-  const handleTitleChange = (val) => {
-    setForm(prev => {
-      const next = { ...prev, title: val };
-      // only auto-fill if meters field is empty
-      if (!prev.meters) {
-        const calc = parseMeersFromTitle(val);
-        if (calc !== null) next.meters = String(calc);
-      }
-      return next;
-    });
-  };
+  const match = title.match(
+    /(\d+(?:[.,]\d+)?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)\s*(cm|mm|m)?/i
+  );
+
+  if (!match) return null;
+
+  let w = parseFloat(match[1].replace(",", "."));
+  let h = parseFloat(match[2].replace(",", "."));
+  const unit = match[3]?.toLowerCase();
+
+  if (unit === "mm") {
+    w = w / 1000;
+    h = h / 1000;
+  } else if (unit === "cm" || !unit) {
+    w = w / 100;
+    h = h / 100;
+  }
+
+  return parseFloat((w * h).toFixed(2));
+};
+
+const handleTitleChange = (val) => {
+  setForm(prev => {
+    const calc = parseMeersFromTitle(val);
+
+    return {
+      ...prev,
+      title: val,
+      meters: calc !== null ? String(calc) : prev.meters
+    };
+  });
+};
 
 const handleFileUpload = async (e) => {
   const fileList = Array.from(e.target.files);
@@ -408,7 +411,7 @@ if (error) {
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">
                 Metry (m²)
-                {form.meters && parseMeersFromTitle(form.title) === parseFloat(form.meters) && (
+                {form.meters && parseMetersFromTitle(form.title) === parseFloat(form.meters) && (
                   <span className="ml-2 text-blue-400 font-normal">obliczone z nazwy</span>
                 )}
               </Label>
