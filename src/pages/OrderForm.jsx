@@ -197,7 +197,8 @@ const handleSave = async (andNew = false) => {
   delete data.print_type;
 
 delete data.print_type;
-    if (orderId) {
+if (orderId) {
+
   const { error } = await supabase
     .from("orders")
     .update(data)
@@ -207,32 +208,31 @@ delete data.print_type;
     console.error("SUPABASE ERROR:", error);
     alert(error.message);
   }
-// Record history for changed fields
-if (originalForm) {
-  for (const field of TRACKED_FIELDS) {
-    const oldVal = String(originalForm[field] ?? "");
-    const newVal = String(form[field] ?? "");
 
-    if (oldVal !== newVal) {
-      const { error: historyError } = await supabase
-        .from("order_comments")
-        .insert([{
-          order_id: orderId,
-          type: "history",
-          content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-          author: "Użytkownik",
-          field_changed: field,
-          old_value: oldVal,
-          new_value: newVal,
-        }]);
+  // historia zmian
+  if (originalForm) {
+    for (const field of TRACKED_FIELDS) {
+      const oldVal = String(originalForm[field] ?? "");
+      const newVal = String(form[field] ?? "");
 
-      if (historyError) {
-        console.error("History error:", historyError);
+      if (oldVal !== newVal) {
+        await supabase
+          .from("order_comments")
+          .insert([{
+            order_id: orderId,
+            type: "history",
+            content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
+            author: "Użytkownik",
+            field_changed: field,
+            old_value: oldVal,
+            new_value: newVal,
+          }]);
       }
     }
   }
-}
-    } else {
+
+} else {
+
   const { data: inserted, error } = await supabase
     .from("orders")
     .insert([data])
@@ -254,7 +254,12 @@ if (originalForm) {
         author: "Użytkownik"
       }]);
   }
+
 }
+
+queryClient.invalidateQueries({ queryKey: ["orders"] });
+setOriginalForm(form);
+setSaving(false);
 
 if (error) {
   console.error("SUPABASE ERROR:", error);
