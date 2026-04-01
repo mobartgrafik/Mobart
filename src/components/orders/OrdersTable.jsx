@@ -32,6 +32,28 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
   }
 
   const formatDate = (d) => {
+    const downloadFile = async (url, name) => {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+
+    const blobUrl = window.URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = name || "plik";
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+
+  } catch (err) {
+    console.error("Download error:", err);
+  }
+};
     if (!d) return "—";
     try { return format(new Date(d), "d MMM yyyy", { locale: pl }); }
     catch { return "—"; }
@@ -92,7 +114,7 @@ export default function OrdersTable({ orders, onEdit, onDelete, visibleCols = de
 <button
   onClick={(e) => {
     e.stopPropagation();
-    window.open(order.files[0].url, "_blank");
+    downloadFile(order.files[0].url, order.files[0].name);
   }}
   className="flex items-center gap-1 px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition"
 >
