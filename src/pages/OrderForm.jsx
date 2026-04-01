@@ -254,7 +254,7 @@ if (historyError) {
   }
 
   if (inserted) {
-    await supabase
+    const { error: historyError } = await supabase
       .from("order_comments")
       .insert([{
         order_id: inserted.id,
@@ -262,6 +262,10 @@ if (historyError) {
         content: "Utworzono zlecenie",
         author: "Użytkownik"
       }]);
+
+    if (historyError) {
+      console.error("History insert error:", historyError);
+    }
   }
 
 }
