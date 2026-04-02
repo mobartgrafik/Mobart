@@ -16,6 +16,7 @@ const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakońc
 const PRIORITIES = ["niski", "średni", "wysoki"];
 const CHANNELS = ["Mobart", "Viper", "Zlecenie ze sklepu"];
 const SETTLEMENTS = ["nierozliczone", "rozliczone", "częściowo rozliczone"];
+const EMPLOYEES = ["Kinga", "Kinga Noszczyk", "Klaudia", "Gabryś", "Łukasz", "Darek", "Robert", "Artur"];
 
 const SETTLEMENT_COLORS = {
   "nierozliczone": "text-red-400",
@@ -411,8 +412,22 @@ const downloadFile = async (url, name) => {
             </div>
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Pracownik</Label>
-              <Input value={form.assignee} onChange={e => set("assignee", e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100" placeholder="np. Robert" />
+              <Select
+                value={form.assignee || ""}
+                onValueChange={v => set("assignee", v)}
+              >
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue placeholder="Wybierz pracownika" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="" className="text-zinc-100 focus:bg-zinc-700">—</SelectItem>
+                  {EMPLOYEES.map(name => (
+                    <SelectItem key={name} value={name} className="text-zinc-100 focus:bg-zinc-700">
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

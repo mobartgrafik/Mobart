@@ -11,6 +11,7 @@ import PrintTypeSelect from "./PrintTypeSelect";
 
 const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Przekazane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
+const EMPLOYEES = ["Kinga", "Kinga Noszczyk", "Klaudia", "Gabryś", "Łukasz", "Darek", "Robert", "Artur"];
 
 export default function OrderFormDialog({ open, onOpenChange, order, clients, onSaved }) {
   const [form, setForm] = useState({
@@ -180,8 +181,22 @@ const data = {
             </div>
             <div>
               <Label className="text-zinc-400 text-xs">Osoba odpowiedzialna</Label>
-              <Input value={form.assignee} onChange={e => setForm({...form, assignee: e.target.value})}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1" placeholder="np. Jan" />
+              <Select
+                value={String(form.assignee || "")}
+                onValueChange={v => setForm({ ...form, assignee: v })}
+              >
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1">
+                  <SelectValue placeholder="Wybierz pracownika" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="" className="text-zinc-100 focus:bg-zinc-700">—</SelectItem>
+                  {EMPLOYEES.map(name => (
+                    <SelectItem key={name} value={name} className="text-zinc-100 focus:bg-zinc-700">
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div>
