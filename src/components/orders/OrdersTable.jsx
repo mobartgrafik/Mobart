@@ -34,6 +34,13 @@ const STATUSES = [
 "Zakończone"
 ];
 
+const PRIORITIES = [
+"Niski",
+"Normalny",
+"Wysoki",
+"Pilne"
+];
+
 const SETTLEMENT_COLORS = {
 "nierozliczone": "text-red-400",
 "rozliczone": "text-green-400",
@@ -74,6 +81,15 @@ const changeStatus = async (order, status) => {
 await supabase
 .from("orders")
 .update({ status })
+.eq("id", order.id);
+
+queryClient.invalidateQueries({ queryKey: ["orders"] });
+};
+
+const changePriority = async (order, priority) => {
+await supabase
+.from("orders")
+.update({ priority })
 .eq("id", order.id);
 
 queryClient.invalidateQueries({ queryKey: ["orders"] });
@@ -175,10 +191,29 @@ className="text-zinc-300 hover:bg-zinc-800"
 )}
 
 {v.priority && (
-<TableCell>
+<TableCell onClick={(e) => e.stopPropagation()}>
+<DropdownMenu>
+
+<DropdownMenuTrigger asChild>
+<div>
 <PriorityBadge priority={order.priority} />
+</div>
+</DropdownMenuTrigger>
+
+<DropdownMenuContent className="bg-zinc-900 border-zinc-700">
+{PRIORITIES.map(p => (
+<DropdownMenuItem
+key={p}
+onClick={() => changePriority(order, p)}
+className="text-zinc-300 hover:bg-zinc-800"
+>
+{p}
+</DropdownMenuItem>
+))}
+</DropdownMenuContent>
+
+</DropdownMenu>
 </TableCell>
-)}
 
 {v.deadline && (
 <TableCell>
