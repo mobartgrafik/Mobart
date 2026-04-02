@@ -190,7 +190,7 @@ className="text-zinc-300 hover:bg-zinc-800"
 </TableCell>
 )}
 
-{{v.priority && (
+{v.priority && (
 <TableCell onClick={(e) => e.stopPropagation()}>
 <DropdownMenu>
 
