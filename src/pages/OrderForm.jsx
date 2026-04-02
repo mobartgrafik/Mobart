@@ -43,7 +43,7 @@ export default function OrderForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { authorLabel, avatarUrl } = useAuth();
-  const [addClientToDatabase, setAddClientToDatabase] = useState(true);
+  const [addClientToDatabase, setAddClientToDatabase] = useState(false);
 
   const freshEmptyForm = () => ({
     ...emptyForm,
@@ -128,6 +128,7 @@ const { data, error } = await supabase
       client_name: value,
       client_id: matched ? String(matched.id) : "",
     }));
+    setAddClientToDatabase(false);
     setClientDropdownOpen(true);
   };
 
@@ -137,6 +138,7 @@ const { data, error } = await supabase
       client_name: client.name,
       client_id: String(client.id),
     }));
+    setAddClientToDatabase(false);
     setClientDropdownOpen(false);
   };
 
@@ -546,17 +548,9 @@ const downloadFile = async (url, name) => {
                   </div>
                 )}
               </div>
-              {!form.client_id && String(form.client_name || "").trim() && (
-                <div className="mt-2 text-xs text-amber-400">
-                  Klient nie istnieje jeszcze w bazie.
-                  <label className="ml-2 inline-flex items-center gap-1 text-zinc-300">
-                    <input
-                      type="checkbox"
-                      checked={addClientToDatabase}
-                      onChange={(e) => setAddClientToDatabase(e.target.checked)}
-                    />
-                    Dodać do bazy klientów przy zapisie
-                  </label>
+              {!form.client_id && String(form.client_name || "").trim() && addClientToDatabase && (
+                <div className="mt-2 text-xs text-emerald-400">
+                  Nowy klient zostanie dodany do bazy przy zapisie.
                 </div>
               )}
             </div>

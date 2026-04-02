@@ -20,7 +20,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [addClientToDatabase, setAddClientToDatabase] = useState(true);
+  const [addClientToDatabase, setAddClientToDatabase] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   const normalizedClientInput = String(form.client_name || "").trim().toLowerCase();
   const filteredClients = clients
@@ -164,6 +164,7 @@ const data = {
                   const v = e.target.value;
                   const matched = clients.find(c => String(c.name || "").toLowerCase() === String(v || "").trim().toLowerCase());
                   setForm({ ...form, client_name: v, client_id: matched ? String(matched.id) : "" });
+                  setAddClientToDatabase(false);
                   setClientDropdownOpen(true);
                 }}
                 onFocus={() => setClientDropdownOpen(true)}
@@ -181,6 +182,7 @@ const data = {
                           type="button"
                           onClick={() => {
                             setForm({ ...form, client_name: c.name, client_id: String(c.id) });
+                            setAddClientToDatabase(false);
                             setClientDropdownOpen(false);
                           }}
                           className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
@@ -209,16 +211,10 @@ const data = {
               )}
             </div>
             {!form.client_id && String(form.client_name || "").trim() && (
-              <div className="mt-2 text-xs text-amber-400">
-                Klient nie istnieje jeszcze w bazie.
-                <label className="ml-2 inline-flex items-center gap-1 text-zinc-300">
-                  <input
-                    type="checkbox"
-                    checked={addClientToDatabase}
-                    onChange={e => setAddClientToDatabase(e.target.checked)}
-                  />
-                  Dodać do bazy klientów przy zapisie
-                </label>
+              <div className={`mt-2 text-xs ${addClientToDatabase ? "text-emerald-400" : "text-amber-400"}`}>
+                {addClientToDatabase
+                  ? "Nowy klient zostanie dodany do bazy przy zapisie."
+                  : "Wybierz klienta z listy lub użyj opcji \"+ Dodaj nowego klienta\"."}
               </div>
             )}
           </div>

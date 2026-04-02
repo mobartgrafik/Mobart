@@ -84,6 +84,8 @@ export default function History() {
   // Enrich comments with order titles
   const comments = rawComments.map(c => ({
     ...c,
+    // Fallback: if older entries have no stored avatar, use current user's avatar for own entries.
+    author_avatar_url: c.author_avatar_url || (c.author === authorLabel ? avatarUrl : null),
     order_title: orders.find(o => o.id === c.order_id)?.title || c.order_id,
   }));
 

@@ -80,6 +80,12 @@ const addComment = useMutation({
     catch { return ""; }
   };
 
+  const entriesWithAvatar = entries.map((entry) => ({
+    ...entry,
+    // Fallback for older rows that were saved before avatar field existed.
+    author_avatar_url: entry.author_avatar_url || (entry.author === authorLabel ? avatarUrl : null),
+  }));
+
   return (
     <div className="space-y-4">
       {/* Add comment */}
@@ -111,7 +117,7 @@ const addComment = useMutation({
         <div className="text-zinc-600 text-sm py-4 text-center">Brak aktywności</div>
       ) : (
         <div className="space-y-3 mt-4">
-          {[...entries].reverse().map((entry) => (
+          {[...entriesWithAvatar].reverse().map((entry) => (
             <div key={entry.id} className="flex gap-3">
               <div className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full overflow-hidden border border-zinc-700 bg-zinc-800 flex items-center justify-center">
                 {entry.author_avatar_url ? (
