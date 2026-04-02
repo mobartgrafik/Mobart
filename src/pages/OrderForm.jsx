@@ -27,8 +27,13 @@ const SETTLEMENT_COLORS = {
 const emptyForm = {
   title: "", client_id: "", status: "Nowe", priority: "średni",
   print_type: "", channel: "Mobart", graphic: "", assignee: "",
-  deadline: "", print_date: "", description: "",
+  deadline: "", created_at: "", print_date: "", description: "",
   meters: "", price: "", settlement: "nierozliczone", files: []
+};
+
+const toDatetimeLocal = (d) => {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
 export default function OrderForm() {
@@ -37,7 +42,12 @@ export default function OrderForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [form, setForm] = useState(emptyForm);
+  const freshEmptyForm = () => ({
+    ...emptyForm,
+    created_at: toDatetimeLocal(new Date()),
+  });
+
+  const [form, setForm] = useState(freshEmptyForm);
   const [originalForm, setOriginalForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -82,6 +92,7 @@ const { data, error } = await supabase
         channel: o.channel || "Mobart",
         graphic: o.graphic || "",
         assignee: o.assignee || "",
+        created_at: o.created_at ? o.created_at.slice(0, 16) : toDatetimeLocal(new Date()),
         deadline: o.deadline ? o.deadline.slice(0, 16) : "",
         print_date: o.print_date ? o.print_date.slice(0, 16) : "",
         description: o.description || "",
@@ -96,6 +107,16 @@ const { data, error } = await supabase
   }, [existingOrder, clients]);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+
+  // Sets a datetime-local field to today/tomorrow while preserving current time portion (if any).
+  const applyQuickDate = (key, dayOffset) => {
+    const currentVal = form[key];
+    const base = currentVal ? new Date(currentVal) : new Date();
+    const target = new Date();
+    target.setDate(target.getDate() + dayOffset);
+    base.setFullYear(target.getFullYear(), target.getMonth(), target.getDate());
+    set(key, toDatetimeLocal(base));
+  };
 
   // Parses dimensions like "100x200cm", "1.5x3m", "100x200" (assumed cm) from a string
 const parseMetersFromTitle = (title) => {
@@ -191,6 +212,7 @@ const handleSave = async (andNew = false) => {
     printType: form.print_type,
     meters: form.meters ? parseFloat(form.meters) : null,
     price: form.price ? parseFloat(form.price) : null,
+    created_at: form.created_at || null,
     deadline: form.deadline || null,
     print_date: form.print_date || null
   };
@@ -269,7 +291,7 @@ setOriginalForm(form);
 setSaving(false);
 
 if (andNew) {
-  setForm(emptyForm);
+  setForm(freshEmptyForm());
   navigate(createPageUrl("OrderForm"));
 } else {
   navigate(createPageUrl("Orders"));
@@ -377,17 +399,64 @@ const downloadFile = async (url, name) => {
             </div>
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Termin wydania zamówienia *</Label>
-              <Input type="datetime-local" value={form.deadline} onChange={e => set("deadline", e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100" />
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                  onClick={() => applyQuickDate("deadline", 0)}
+                >
+                  Dzisiaj
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                  onClick={() => applyQuickDate("deadline", 1)}
+                >
+                  Jutro
+                </Button>
+              </div>
+              <Input
+                type="datetime-local"
+                value={form.deadline}
+                onChange={(e) => set("deadline", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <Label className="text-zinc-400 text-xs mb-1.5 block">Rodzaj zadania (technologia)</Label>
-              <Input value={form.print_type?.split(" ")[0] || ""} readOnly
-                className="bg-zinc-800/50 border-zinc-700 text-zinc-500 cursor-not-allowed"
-                placeholder="Wypełni się automatycznie z Produktu" />
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Termin dodania zamówienia</Label>
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                  onClick={() => applyQuickDate("created_at", 0)}
+                >
+                  Dzisiaj
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                  onClick={() => applyQuickDate("created_at", 1)}
+                >
+                  Jutro
+                </Button>
+              </div>
+              <Input
+                type="datetime-local"
+                value={form.created_at}
+                onChange={(e) => set("created_at", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
             </div>
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Kanał zlecenia *</Label>
