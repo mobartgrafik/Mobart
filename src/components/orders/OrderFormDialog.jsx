@@ -15,17 +15,19 @@ const EMPLOYEES = ["Kinga", "Kinga Noszczyk", "Klaudia", "Gabryś", "Łukasz", "
 
 export default function OrderFormDialog({ open, onOpenChange, order, clients, onSaved }) {
   const [form, setForm] = useState({
-    title: "", client_id: "", status: "Nowe", priority: "średni",
+    title: "", client_id: "", client_name: "", status: "Nowe", priority: "średni",
     deadline: "", description: "", assignee: "", print_type: "", files: []
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [addClientToDatabase, setAddClientToDatabase] = useState(true);
 
   useEffect(() => {
     if (order) {
       setForm({
         title: order.title || "",
         client_id: order.client_id || "",
+        client_name: order.client_name || "",
         status: order.status || "Nowe",
         priority: order.priority || "średni",
         print_type: order.print_type || "",
@@ -35,7 +37,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
         files: order.files || []
       });
     } else {
-      setForm({ title: "", client_id: "", status: "Nowe", priority: "średni", deadline: "", description: "", assignee: "", files: [] });
+      setForm({ title: "", client_id: "", client_name: "", status: "Nowe", priority: "średni", deadline: "", description: "", assignee: "", files: [] });
     }
   }, [order, open]);
 
@@ -60,17 +62,36 @@ const handleFileUpload = async (e) => {
   };
 
 const handleSave = async () => {
-  if (!form.title || !form.client_id?.toString().length) return;
+  const normalizedClientName = String(form.client_name || "").trim();
+  if (!form.title || !normalizedClientName) return;
 
   setSaving(true);
 
   try {
-    const client = clients.find(c => c.id === Number(form.client_id));
+    let client = clients.find(c => c.id === Number(form.client_id));
+    if (!client) {
+      client = clients.find(c => String(c.name || "").toLowerCase() === normalizedClientName.toLowerCase());
+    }
+
+    let resolvedClientId = client?.id ?? null;
+    let resolvedClientName = client?.name || normalizedClientName;
+
+    if (!client && addClientToDatabase) {
+      const { data: insertedClient, error: clientInsertError } = await supabase
+        .from("clients")
+        .insert([{ name: normalizedClientName }])
+        .select()
+        .single();
+
+      if (clientInsertError) throw clientInsertError;
+      resolvedClientId = insertedClient?.id ?? null;
+      resolvedClientName = insertedClient?.name || normalizedClientName;
+    }
 
 const data = {
   title: form.title || "",
-  client_id: Number(form.client_id),
-  client_name: client?.name || "",
+  client_id: resolvedClientId,
+  client_name: resolvedClientName,
   status: form.status || "Nowe",
   priority: form.priority || "średni",
   deadline: form.deadline || null,
@@ -128,16 +149,35 @@ const data = {
           </div>
           <div>
             <Label className="text-zinc-400 text-xs">Klient *</Label>
-            <Select value={String(form.client_id || "")} onValueChange={v => setForm({...form, client_id: v})}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1">
-                <SelectValue placeholder="Wybierz klienta" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700">
-                {clients.map(c => (
-                  <SelectItem key={c.id} value={String(c.id)} className="text-zinc-100 focus:bg-zinc-700 focus:text-zinc-100">{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              list="order-dialog-clients-list"
+              value={form.client_name || ""}
+              onChange={e => {
+                const v = e.target.value;
+                const matched = clients.find(c => String(c.name || "").toLowerCase() === String(v || "").trim().toLowerCase());
+                setForm({ ...form, client_name: v, client_id: matched ? String(matched.id) : "" });
+              }}
+              className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1"
+              placeholder="Wpisz nazwę klienta lub wybierz z podpowiedzi"
+            />
+            <datalist id="order-dialog-clients-list">
+              {clients.map(c => (
+                <option key={c.id} value={c.name} />
+              ))}
+            </datalist>
+            {!form.client_id && String(form.client_name || "").trim() && (
+              <div className="mt-2 text-xs text-amber-400">
+                Klient nie istnieje jeszcze w bazie.
+                <label className="ml-2 inline-flex items-center gap-1 text-zinc-300">
+                  <input
+                    type="checkbox"
+                    checked={addClientToDatabase}
+                    onChange={e => setAddClientToDatabase(e.target.checked)}
+                  />
+                  Dodać do bazy klientów przy zapisie
+                </label>
+              </div>
+            )}
           </div>
           <div>
             <Label className="text-zinc-400 text-xs">Typ wydruku</Label>
@@ -223,7 +263,7 @@ const data = {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">Anuluj</Button>
-          <Button onClick={handleSave} disabled={saving || !form.title || !form.client_id}
+          <Button onClick={handleSave} disabled={saving || !form.title || !String(form.client_name || "").trim()}
             className="bg-blue-600 hover:bg-blue-700 text-white">
             {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {order ? "Zapisz zmiany" : "Utwórz zlecenie"}

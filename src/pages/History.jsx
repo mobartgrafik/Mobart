@@ -54,7 +54,7 @@ export default function History() {
   const [revertingId, setRevertingId] = useState(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { authorLabel } = useAuth();
+  const { authorLabel, avatarUrl } = useAuth();
 
   const { data: rawComments = [], isLoading: loadingComments } = useQuery({
     queryKey: ["all-comments"],
@@ -124,6 +124,7 @@ export default function History() {
     type: "history",
     content: `Cofnięto zmianę: ${FIELD_LABELS[entry.field_changed] || entry.field_changed}`,
     author: authorLabel,
+    author_avatar_url: avatarUrl || null,
     field_changed: entry.field_changed,
     old_value: entry.new_value,
     new_value: entry.old_value,
@@ -218,13 +219,14 @@ function HistoryRow({ entry, onRevert, revertingId, formatDate, navigate }) {
   return (
     <div className="flex gap-3 p-3 rounded-xl bg-zinc-900/40 border border-zinc-800/40 hover:border-zinc-700/60 transition-colors group">
       {/* Icon */}
-      <div className={`mt-0.5 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-        isHistory ? "bg-zinc-800" : "bg-blue-600/20"
-      }`}>
-        {isHistory
-          ? <Clock className="w-3.5 h-3.5 text-zinc-500" />
-          : <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-        }
+      <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border border-zinc-700 bg-zinc-800 flex items-center justify-center">
+        {entry.author_avatar_url ? (
+          <img src={entry.author_avatar_url} alt="" className="w-full h-full object-cover" />
+        ) : isHistory ? (
+          <Clock className="w-3.5 h-3.5 text-zinc-500" />
+        ) : (
+          <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+        )}
       </div>
 
       {/* Content */}

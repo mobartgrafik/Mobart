@@ -20,7 +20,7 @@ const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
 
 export default function Orders() {
   const navigate = useNavigate();
-  const { authorLabel } = useAuth();
+  const { authorLabel, avatarUrl } = useAuth();
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Wszystkie");
@@ -68,7 +68,8 @@ const deleteMutation = useMutation({
         order_id: order.id,
         type: "history",
         content: `Usunięto zlecenie: ${order.title}`,
-        author: authorLabel
+        author: authorLabel,
+        author_avatar_url: avatarUrl || null,
       }]);
 
   },

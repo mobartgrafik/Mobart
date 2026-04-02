@@ -26,7 +26,7 @@ const FIELD_LABELS = {
 export default function OrderActivity({ orderId }) {
   const [comment, setComment] = useState("");
   const queryClient = useQueryClient();
-  const { authorLabel } = useAuth();
+  const { authorLabel, avatarUrl } = useAuth();
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["order-comments", orderId],
@@ -56,7 +56,8 @@ const addComment = useMutation({
           order_id: orderId,
           content,
           type: "comment",
-          author: authorLabel
+          author: authorLabel,
+          author_avatar_url: avatarUrl || null,
         }
       ]);
 
@@ -112,13 +113,14 @@ const addComment = useMutation({
         <div className="space-y-3 mt-4">
           {[...entries].reverse().map((entry) => (
             <div key={entry.id} className="flex gap-3">
-              <div className={`mt-0.5 flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
-                entry.type === "comment" ? "bg-blue-600/20" : "bg-zinc-800"
-              }`}>
-                {entry.type === "comment"
-                  ? <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
-                  : <Clock className="w-3.5 h-3.5 text-zinc-500" />
-                }
+              <div className="mt-0.5 flex-shrink-0 w-7 h-7 rounded-full overflow-hidden border border-zinc-700 bg-zinc-800 flex items-center justify-center">
+                {entry.author_avatar_url ? (
+                  <img src={entry.author_avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : entry.type === "comment" ? (
+                  <MessageSquare className="w-3.5 h-3.5 text-blue-400" />
+                ) : (
+                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">

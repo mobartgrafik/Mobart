@@ -26,7 +26,7 @@ const SETTLEMENT_COLORS = {
 };
 
 const emptyForm = {
-  title: "", client_id: "", status: "Nowe", priority: "średni",
+  title: "", client_id: "", client_name: "", status: "Nowe", priority: "średni",
   print_type: "", channel: "Mobart", graphic: "", assignee: "",
   deadline: "", created_at: "", print_date: "", description: "",
   meters: "", price: "", settlement: "nierozliczone", files: []
@@ -42,7 +42,8 @@ export default function OrderForm() {
   const orderId = urlParams.get("id");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { authorLabel } = useAuth();
+  const { authorLabel, avatarUrl } = useAuth();
+  const [addClientToDatabase, setAddClientToDatabase] = useState(true);
 
   const freshEmptyForm = () => ({
     ...emptyForm,
@@ -88,6 +89,7 @@ const { data, error } = await supabase
       const loaded = {
         title: o.title || "",
         client_id: o.client_id?.toString() || "",
+        client_name: o.client_name || "",
         status: o.status || "Nowe",
         priority: o.priority || "średni",
         print_type: o.printType || "",
@@ -201,16 +203,41 @@ const handleFileUpload = async (e) => {
   const FIELD_LABELS_SAVE = { status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik", deadline: "Termin", print_date: "Data wydruku", settlement: "Rozliczenie", channel: "Kanał", meters: "Metry (m²)", price: "Cena", print_type: "Produkt", title: "Nazwa zlecenia" };
 
 const handleSave = async (andNew = false) => {
-  if (!form.title || !form.client_id) return;
+  const normalizedClientName = String(form.client_name || "").trim();
+  if (!form.title || !normalizedClientName) return;
   setSaving(true);
 
-  const client = clients.find(
-  c => String(c.id) === String(form.client_id)
-);
+  let client = clients.find(c => String(c.id) === String(form.client_id));
+  if (!client) {
+    client = clients.find(c => String(c.name || "").toLowerCase() === normalizedClientName.toLowerCase());
+  }
+
+  let resolvedClientId = client?.id ?? null;
+  let resolvedClientName = client?.name || normalizedClientName;
+
+  if (!client && addClientToDatabase) {
+    const { data: insertedClient, error: clientInsertError } = await supabase
+      .from("clients")
+      .insert([{ name: normalizedClientName }])
+      .select()
+      .single();
+
+    if (clientInsertError) {
+      console.error("CLIENT INSERT ERROR:", clientInsertError);
+      alert(clientInsertError.message);
+      setSaving(false);
+      return;
+    }
+
+    resolvedClientId = insertedClient?.id ?? null;
+    resolvedClientName = insertedClient?.name || normalizedClientName;
+    queryClient.invalidateQueries({ queryKey: ["clients"] });
+  }
 
   const data = {
     ...form,
-    client_name: client?.name || "",
+    client_id: resolvedClientId,
+    client_name: resolvedClientName,
     printType: form.print_type,
     meters: form.meters ? parseFloat(form.meters) : null,
     price: form.price ? parseFloat(form.price) : null,
@@ -245,6 +272,7 @@ for (const field of TRACKED_FIELDS) {
         type: "history",
         content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
         author: authorLabel,
+        author_avatar_url: avatarUrl || null,
         field_changed: field,
         old_value: oldVal,
         new_value: newVal,
@@ -277,7 +305,8 @@ for (const field of TRACKED_FIELDS) {
         order_id: inserted.id,
         type: "history",
         content: "Utworzono zlecenie",
-        author: authorLabel
+        author: authorLabel,
+        author_avatar_url: avatarUrl || null,
       }]);
 
     if (historyError) {
@@ -345,7 +374,7 @@ const downloadFile = async (url, name) => {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => handleSave(false)} disabled={saving || !form.title || !form.client_id}
+          <Button onClick={() => handleSave(false)} disabled={saving || !form.title || !String(form.client_name || "").trim()}
             className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Zapisz
@@ -355,7 +384,7 @@ const downloadFile = async (url, name) => {
             Anuluj
           </Button>
           {!orderId && (
-            <Button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.client_id}
+            <Button onClick={() => handleSave(true)} disabled={saving || !form.title || !String(form.client_name || "").trim()}
               variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
               Zamknij i utwórz nowe
             </Button>
@@ -446,25 +475,36 @@ const downloadFile = async (url, name) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Klient *</Label>
-              <Select
-                value={form.client_id || ""}
-                onValueChange={v => set("client_id", v)}
-              >
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
-                  <SelectValue placeholder="Wybierz klienta" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {clients.map(c => (
-                    <SelectItem
-                      key={c.id}
-                      value={String(c.id)}
-                      className="text-zinc-100 focus:bg-zinc-700"
-                    >
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                list="order-clients-list"
+                value={form.client_name || ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  set("client_name", v);
+                  const matched = clients.find(c => String(c.name || "").toLowerCase() === String(v || "").trim().toLowerCase());
+                  set("client_id", matched ? String(matched.id) : "");
+                }}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+                placeholder="Wpisz nazwę klienta lub wybierz z podpowiedzi"
+              />
+              <datalist id="order-clients-list">
+                {clients.map(c => (
+                  <option key={c.id} value={c.name} />
+                ))}
+              </datalist>
+              {!form.client_id && String(form.client_name || "").trim() && (
+                <div className="mt-2 text-xs text-amber-400">
+                  Klient nie istnieje jeszcze w bazie.
+                  <label className="ml-2 inline-flex items-center gap-1 text-zinc-300">
+                    <input
+                      type="checkbox"
+                      checked={addClientToDatabase}
+                      onChange={(e) => setAddClientToDatabase(e.target.checked)}
+                    />
+                    Dodać do bazy klientów przy zapisie
+                  </label>
+                </div>
+              )}
             </div>
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Kanał zlecenia *</Label>
@@ -645,7 +685,7 @@ const downloadFile = async (url, name) => {
 
       {/* Bottom action bar */}
       <div className="flex items-center gap-2 pb-4">
-        <Button onClick={() => handleSave(false)} disabled={saving || !form.title || !form.client_id}
+        <Button onClick={() => handleSave(false)} disabled={saving || !form.title || !String(form.client_name || "").trim()}
           className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Zapisz
@@ -655,7 +695,7 @@ const downloadFile = async (url, name) => {
           Anuluj
         </Button>
         {!orderId && (
-          <Button onClick={() => handleSave(true)} disabled={saving || !form.title || !form.client_id}
+          <Button onClick={() => handleSave(true)} disabled={saving || !form.title || !String(form.client_name || "").trim()}
             variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100">
             Zamknij i utwórz nowe
           </Button>
