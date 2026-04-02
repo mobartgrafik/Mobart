@@ -549,12 +549,7 @@ const downloadFile = async (url, name) => {
           <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider">Dane produkcyjne</h2>
         </div>
         <div className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div>
-              <Label className="text-zinc-400 text-xs mb-1.5 block">Data wydruku</Label>
-              <Input type="datetime-local" value={form.print_date} onChange={e => set("print_date", e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100" />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">
                 Metry (m²)
