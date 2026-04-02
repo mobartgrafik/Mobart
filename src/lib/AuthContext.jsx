@@ -44,6 +44,10 @@ export const AuthProvider = ({ children }) => {
     user?.user_metadata?.display_name ||
     user?.user_metadata?.displayName ||
     null;
+  const avatarUrl =
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.avatarUrl ||
+    null;
 
   const authorLabel = useMemo(() => {
     const dn = String(displayName || '').trim();
@@ -93,11 +97,12 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
-  const updateProfile = async ({ username: newUsername, displayName: newDisplayName }) => {
+  const updateProfile = async ({ username: newUsername, displayName: newDisplayName, avatarUrl: newAvatarUrl } = {}) => {
     setAuthError(null);
     const data = {};
     if (newUsername !== undefined) data.username = newUsername;
     if (newDisplayName !== undefined) data.display_name = newDisplayName;
+    if (newAvatarUrl !== undefined) data.avatar_url = newAvatarUrl;
     const { error } = await supabase.auth.updateUser({ data });
     if (error) throw error;
   };
@@ -109,6 +114,7 @@ export const AuthProvider = ({ children }) => {
         user,
         username,
         displayName,
+        avatarUrl,
         authorLabel,
         role,
         isAuthenticated,

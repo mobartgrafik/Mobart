@@ -18,7 +18,7 @@ const NAV_ITEMS = [
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const { authorLabel, signOut } = useAuth();
+  const { authorLabel, avatarUrl, signOut } = useAuth();
 
   useEffect(() => {
     const handler = (e) => {
@@ -127,7 +127,15 @@ export default function Layout({ children, currentPageName }) {
               to="/profile"
               className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/30 border border-zinc-800/60 text-zinc-300 hover:text-zinc-100 hover:border-zinc-700 transition-colors text-sm"
             >
-              <User2 className="w-4 h-4" />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt=""
+                  className="w-6 h-6 rounded-full object-cover border border-zinc-700"
+                />
+              ) : (
+                <User2 className="w-4 h-4" />
+              )}
               <span className="max-w-40 truncate">{authorLabel}</span>
             </Link>
             <Button
