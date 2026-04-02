@@ -3,7 +3,7 @@ import { supabase } from "@/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { FileText, Users, Printer, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { FileText, Users, Printer, AlertTriangle, Clock } from "lucide-react";
 import StatusBadge from "@/components/orders/StatusBadge";
 import PriorityBadge from "@/components/orders/PriorityBadge";
 import { format } from "date-fns";
@@ -27,12 +27,26 @@ function StatCard({ icon: Icon, label, value, color, to }) {
 export default function Dashboard() {
   const { data: orders = [] } = useQuery({
     queryKey: ["orders"],
-    queryFn: () => base44.entities.Order.list("-created_date"),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients"],
-    queryFn: () => base44.entities.Client.list(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const activeOrders = orders.filter(o => o.status !== "Zakończone");

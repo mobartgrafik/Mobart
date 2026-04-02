@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const UserNotRegisteredError = () => {
   return (
@@ -21,6 +22,21 @@ const UserNotRegisteredError = () => {
               <li>Contact the app administrator for access</li>
               <li>Try logging out and back in again</li>
             </ul>
+          </div>
+
+          <div className="mt-6 flex gap-3 justify-center">
+            <Link
+              to="/login"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Zaloguj
+            </Link>
+            <Link
+              to="/register"
+              className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50 transition-colors"
+            >
+              Zarejestruj
+            </Link>
           </div>
         </div>
       </div>

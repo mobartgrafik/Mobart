@@ -1,5 +1,5 @@
 import React from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Printer, CheckCircle, Calendar, User, FileText, ArrowRight } from "lucide-react";
@@ -12,13 +12,26 @@ export default function Handoff() {
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ["orders"],
-    queryFn: () => base44.entities.Order.list("-created_date"),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
   });
 
   const handoffOrders = orders.filter(o => o.status === "Do przekazania");
 
   const markPrinted = useMutation({
-    mutationFn: (id) => base44.entities.Order.update(id, { status: "Wydrukowane" }),
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "Wydrukowane" })
+        .eq("id", id);
+      if (error) throw error;
+    },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["orders"] }),
   });
 
