@@ -5,10 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, RefreshCw, Type, Image as ImageIcon, Palette, Phone } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import html2canvas from "html2canvas";
 
 const PRESETS = [
-  { label: "Baner 100×200cm", w: 600, h: 1200 },
+  { label: "Baner 100×200cm", w: 1200, h: 600 },
   { label: "Baner 6×3m", w: 1200, h: 600 },
   { label: "Baner 3×1m", w: 900, h: 300 },
   { label: "Rollup 85×200cm", w: 510, h: 1200 },
@@ -30,12 +31,17 @@ const GRADIENTS = [
 ];
 
 const FONTS = ["Arial", "Georgia", "Impact", "Trebuchet MS", "Verdana", "Courier New"];
-const TEMPLATE_OPTIONS = ["Brak", "SPRZEDAM", "WYNAJMĘ", "PROMOCJA", "OTWARCIE"];
+const TEMPLATE_CARDS = [
+  { name: "SPRZEDAM", previewBg: "#ffffff", previewColor: "#111111", previewSub: "Dobra lokalizacja" },
+  { name: "WYNAJMĘ", previewBg: "#ffffff", previewColor: "#111111", previewSub: "Atrakcyjna oferta" },
+  { name: "PROMOCJA", previewBg: "linear-gradient(135deg, #ffd200 0%, #f7971e 100%)", previewColor: "#111111", previewSub: "Tylko teraz!" },
+  { name: "OTWARCIE", previewBg: "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)", previewColor: "#ffffff", previewSub: "Zapraszamy!" },
+];
 
 export default function BannerCreator() {
   const [preset, setPreset] = useState(PRESETS[0]);
-  const [customW, setCustomW] = useState(800);
-  const [customH, setCustomH] = useState(400);
+  const [customW, setCustomW] = useState(PRESETS[0].w);
+  const [customH, setCustomH] = useState(PRESETS[0].h);
   const [bg, setBg] = useState("#ffffff");
   const [headline, setHeadline] = useState("TWÓJ TEKST TUTAJ");
   const [subtext, setSubtext] = useState("Podtytuł lub slogan reklamowy");
@@ -49,10 +55,12 @@ export default function BannerCreator() {
   const [exporting, setExporting] = useState(false);
   const [align, setAlign] = useState("center");
   const [template, setTemplate] = useState("Brak");
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("123 456 789");
 
   const bannerRef = useRef(null);
+  const customPreset = PRESETS.find(p => p.label === "Własny");
 
   const width = preset.w ?? customW;
   const height = preset.h ?? customH;
@@ -84,6 +92,16 @@ export default function BannerCreator() {
     reader.readAsDataURL(file);
   };
 
+  const handlePresetChange = (label) => {
+    const selected = PRESETS.find((p) => p.label === label);
+    if (!selected) return;
+    setPreset(selected);
+    if (selected.w && selected.h) {
+      setCustomW(selected.w);
+      setCustomH(selected.h);
+    }
+  };
+
   const applyTemplate = (name) => {
     setTemplate(name);
 
@@ -100,6 +118,7 @@ export default function BannerCreator() {
       setPhoneNumber("123 456 789");
       setHeadlineSize(120);
       setSubtextSize(38);
+      setTemplatesOpen(false);
       return;
     }
 
@@ -116,6 +135,7 @@ export default function BannerCreator() {
       setPhoneNumber("123 456 789");
       setHeadlineSize(110);
       setSubtextSize(36);
+      setTemplatesOpen(false);
       return;
     }
 
@@ -132,6 +152,7 @@ export default function BannerCreator() {
       setPhoneNumber("123 456 789");
       setHeadlineSize(115);
       setSubtextSize(40);
+      setTemplatesOpen(false);
       return;
     }
 
@@ -148,11 +169,13 @@ export default function BannerCreator() {
       setPhoneNumber("123 456 789");
       setHeadlineSize(90);
       setSubtextSize(34);
+      setTemplatesOpen(false);
       return;
     }
 
     if (name === "Brak") {
       setShowPhone(false);
+      setTemplatesOpen(false);
     }
   };
 
@@ -179,7 +202,7 @@ export default function BannerCreator() {
             <Label className="text-zinc-400 text-xs mb-1.5 block">Format</Label>
             <Select
               value={preset.label}
-              onValueChange={v => setPreset(PRESETS.find(p => p.label === v))}
+              onValueChange={handlePresetChange}
             >
               <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
                 <SelectValue />
@@ -190,31 +213,67 @@ export default function BannerCreator() {
                 ))}
               </SelectContent>
             </Select>
-            {preset.label === "Własny" && (
-              <div className="flex gap-2 mt-2">
-                <Input type="number" value={customW} onChange={e => setCustomW(+e.target.value)}
-                  placeholder="Szerokość (px)" className="bg-zinc-800 border-zinc-700 text-zinc-100" />
-                <Input type="number" value={customH} onChange={e => setCustomH(+e.target.value)}
-                  placeholder="Wysokość (px)" className="bg-zinc-800 border-zinc-700 text-zinc-100" />
-              </div>
-            )}
+            <div className="flex gap-2 mt-2">
+              <Input
+                type="number"
+                value={customW}
+                onChange={(e) => {
+                  setCustomW(Math.max(100, +e.target.value || 100));
+                  setPreset(customPreset);
+                }}
+                placeholder="Szerokość (px)"
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+              <Input
+                type="number"
+                value={customH}
+                onChange={(e) => {
+                  setCustomH(Math.max(100, +e.target.value || 100));
+                  setPreset(customPreset);
+                }}
+                placeholder="Wysokość (px)"
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+            </div>
           </div>
 
           {/* Templates */}
           <div>
             <Label className="text-zinc-400 text-xs mb-1.5 block">Szablon</Label>
-            <Select value={template} onValueChange={applyTemplate}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700">
-                {TEMPLATE_OPTIONS.map(t => (
-                  <SelectItem key={t} value={t} className="text-zinc-100 focus:bg-zinc-700">
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full bg-zinc-800 border-zinc-700 text-zinc-100 hover:bg-zinc-700">
+                  Szablony ({template})
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-100 max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Wybierz szablon baneru</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  {TEMPLATE_CARDS.map((t) => (
+                    <button
+                      key={t.name}
+                      onClick={() => applyTemplate(t.name)}
+                      className={`text-left rounded-lg border transition-all overflow-hidden ${
+                        template === t.name ? "border-blue-500" : "border-zinc-700 hover:border-zinc-500"
+                      }`}
+                    >
+                      <div
+                        className="h-24 p-3 flex flex-col justify-between"
+                        style={{ background: t.previewBg }}
+                      >
+                        <div style={{ color: t.previewColor, fontFamily: "Impact", fontSize: 24, lineHeight: 1 }}>
+                          {t.name}
+                        </div>
+                        <div style={{ color: t.previewColor, opacity: 0.9, fontSize: 13 }}>{t.previewSub}</div>
+                      </div>
+                      <div className="px-3 py-2 text-sm bg-zinc-900 text-zinc-200">{t.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Background */}
@@ -302,6 +361,27 @@ export default function BannerCreator() {
                 <button onClick={() => setLogoUrl("")} className="text-xs text-red-400 hover:text-red-300">Usuń</button>
               </div>
             )}
+          </div>
+
+          {/* Phone */}
+          <div>
+            <Label className="text-zinc-400 text-xs mb-1.5 block flex items-center gap-1"><Phone className="w-3 h-3" /> Telefon na banerze</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={showPhone ? "default" : "outline"}
+                className={showPhone ? "bg-blue-600 hover:bg-blue-700 text-white" : "border-zinc-700 text-zinc-300 hover:bg-zinc-800"}
+                onClick={() => setShowPhone(prev => !prev)}
+              >
+                {showPhone ? "Włączony" : "Wyłączony"}
+              </Button>
+              <Input
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="np. 123 456 789"
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
+            </div>
           </div>
         </div>
 
