@@ -382,20 +382,33 @@ const downloadFile = async (url, name) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <Label className="text-zinc-400 text-xs mb-1.5 block">Klient *</Label>
-              <Select
-  value={form.client_id || ""}
-  onValueChange={v => set("client_id", v)}
->
-                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
-                  <SelectValue placeholder="Wybierz klienta" />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {clients.map(c => (
-                    <SelectItem key={c.id} value={String(c.id)} className="text-zinc-100 focus:bg-zinc-700">{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Termin dodania zamówienia</Label>
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                  onClick={() => applyQuickDate("created_at", 0)}
+                >
+                  Dzisiaj
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                  onClick={() => applyQuickDate("created_at", 1)}
+                >
+                  Jutro
+                </Button>
+              </div>
+              <Input
+                type="datetime-local"
+                value={form.created_at}
+                onChange={(e) => set("created_at", e.target.value)}
+                className="bg-zinc-800 border-zinc-700 text-zinc-100"
+              />
             </div>
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Termin wydania zamówienia *</Label>
@@ -430,33 +443,26 @@ const downloadFile = async (url, name) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <Label className="text-zinc-400 text-xs mb-1.5 block">Termin dodania zamówienia</Label>
-              <div className="flex gap-2 mb-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-                  onClick={() => applyQuickDate("created_at", 0)}
-                >
-                  Dzisiaj
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-                  onClick={() => applyQuickDate("created_at", 1)}
-                >
-                  Jutro
-                </Button>
-              </div>
-              <Input
-                type="datetime-local"
-                value={form.created_at}
-                onChange={(e) => set("created_at", e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100"
-              />
+              <Label className="text-zinc-400 text-xs mb-1.5 block">Klient *</Label>
+              <Select
+                value={form.client_id || ""}
+                onValueChange={v => set("client_id", v)}
+              >
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue placeholder="Wybierz klienta" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  {clients.map(c => (
+                    <SelectItem
+                      key={c.id}
+                      value={String(c.id)}
+                      className="text-zinc-100 focus:bg-zinc-700"
+                    >
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Kanał zlecenia *</Label>
