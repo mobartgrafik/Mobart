@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, RefreshCw, Type, Image as ImageIcon, Palette } from "lucide-react";
+import { Download, RefreshCw, Type, Image as ImageIcon, Palette, Phone } from "lucide-react";
 import html2canvas from "html2canvas";
 
 const PRESETS = [
+  { label: "Baner 100×200cm", w: 600, h: 1200 },
   { label: "Baner 6×3m", w: 1200, h: 600 },
   { label: "Baner 3×1m", w: 900, h: 300 },
   { label: "Rollup 85×200cm", w: 510, h: 1200 },
@@ -29,23 +30,27 @@ const GRADIENTS = [
 ];
 
 const FONTS = ["Arial", "Georgia", "Impact", "Trebuchet MS", "Verdana", "Courier New"];
+const TEMPLATE_OPTIONS = ["Brak", "SPRZEDAM", "WYNAJMĘ", "PROMOCJA", "OTWARCIE"];
 
 export default function BannerCreator() {
   const [preset, setPreset] = useState(PRESETS[0]);
   const [customW, setCustomW] = useState(800);
   const [customH, setCustomH] = useState(400);
-  const [bg, setBg] = useState(GRADIENTS[0].value);
+  const [bg, setBg] = useState("#ffffff");
   const [headline, setHeadline] = useState("TWÓJ TEKST TUTAJ");
   const [subtext, setSubtext] = useState("Podtytuł lub slogan reklamowy");
   const [headlineSize, setHeadlineSize] = useState(72);
   const [subtextSize, setSubtextSize] = useState(32);
-  const [headlineColor, setHeadlineColor] = useState("#ffffff");
-  const [subtextColor, setSubtextColor] = useState("#dddddd");
+  const [headlineColor, setHeadlineColor] = useState("#000000");
+  const [subtextColor, setSubtextColor] = useState("#000000");
   const [font, setFont] = useState("Impact");
   const [logoUrl, setLogoUrl] = useState("");
   const [logoSize, setLogoSize] = useState(120);
   const [exporting, setExporting] = useState(false);
   const [align, setAlign] = useState("center");
+  const [template, setTemplate] = useState("Brak");
+  const [showPhone, setShowPhone] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const bannerRef = useRef(null);
 
@@ -77,6 +82,78 @@ export default function BannerCreator() {
     const reader = new FileReader();
     reader.onload = (ev) => setLogoUrl(ev.target.result);
     reader.readAsDataURL(file);
+  };
+
+  const applyTemplate = (name) => {
+    setTemplate(name);
+
+    if (name === "SPRZEDAM") {
+      setPreset(PRESETS[0]); // 100x200cm
+      setBg("#ffffff");
+      setHeadline("SPRZEDAM");
+      setSubtext("Dobra lokalizacja");
+      setHeadlineColor("#000000");
+      setSubtextColor("#000000");
+      setFont("Impact");
+      setAlign("center");
+      setShowPhone(true);
+      setPhoneNumber("123 456 789");
+      setHeadlineSize(120);
+      setSubtextSize(38);
+      return;
+    }
+
+    if (name === "WYNAJMĘ") {
+      setPreset(PRESETS[0]); // 100x200cm
+      setBg("#ffffff");
+      setHeadline("WYNAJMĘ");
+      setSubtext("Atrakcyjna oferta");
+      setHeadlineColor("#000000");
+      setSubtextColor("#000000");
+      setFont("Impact");
+      setAlign("center");
+      setShowPhone(true);
+      setPhoneNumber("123 456 789");
+      setHeadlineSize(110);
+      setSubtextSize(36);
+      return;
+    }
+
+    if (name === "PROMOCJA") {
+      setPreset(PRESETS[0]); // 100x200cm
+      setBg("linear-gradient(135deg, #ffd200 0%, #f7971e 100%)");
+      setHeadline("PROMOCJA");
+      setSubtext("Tylko teraz!");
+      setHeadlineColor("#111111");
+      setSubtextColor("#1f1f1f");
+      setFont("Impact");
+      setAlign("center");
+      setShowPhone(true);
+      setPhoneNumber("123 456 789");
+      setHeadlineSize(115);
+      setSubtextSize(40);
+      return;
+    }
+
+    if (name === "OTWARCIE") {
+      setPreset(PRESETS[0]); // 100x200cm
+      setBg("linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)");
+      setHeadline("WIELKIE OTWARCIE");
+      setSubtext("Zapraszamy!");
+      setHeadlineColor("#ffffff");
+      setSubtextColor("#e5e7eb");
+      setFont("Impact");
+      setAlign("center");
+      setShowPhone(true);
+      setPhoneNumber("123 456 789");
+      setHeadlineSize(90);
+      setSubtextSize(34);
+      return;
+    }
+
+    if (name === "Brak") {
+      setShowPhone(false);
+    }
   };
 
   return (
@@ -121,6 +198,23 @@ export default function BannerCreator() {
                   placeholder="Wysokość (px)" className="bg-zinc-800 border-zinc-700 text-zinc-100" />
               </div>
             )}
+          </div>
+
+          {/* Templates */}
+          <div>
+            <Label className="text-zinc-400 text-xs mb-1.5 block">Szablon</Label>
+            <Select value={template} onValueChange={applyTemplate}>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-800 border-zinc-700">
+                {TEMPLATE_OPTIONS.map(t => (
+                  <SelectItem key={t} value={t} className="text-zinc-100 focus:bg-zinc-700">
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Background */}
@@ -275,6 +369,28 @@ export default function BannerCreator() {
                     opacity: 0.9,
                   }}>
                     {subtext}
+                  </div>
+                )}
+
+                {showPhone && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: Math.round(height * 0.05),
+                      left: Math.round(width * 0.06),
+                      right: Math.round(width * 0.06),
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center",
+                      gap: Math.max(12, Math.round(width * 0.02)),
+                      color: headlineColor,
+                      fontFamily: font,
+                      fontSize: Math.max(28, Math.round(headlineSize * 0.35)),
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <Phone size={Math.max(30, Math.round(width * 0.04))} />
+                    <span>{phoneNumber}</span>
                   </div>
                 )}
               </div>
