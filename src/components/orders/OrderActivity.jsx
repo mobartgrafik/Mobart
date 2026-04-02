@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Clock, Send, Loader2, User } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
+import { useAuth } from "@/lib/AuthContext";
 
 const FIELD_LABELS = {
   status: "Status",
@@ -25,6 +26,7 @@ const FIELD_LABELS = {
 export default function OrderActivity({ orderId }) {
   const [comment, setComment] = useState("");
   const queryClient = useQueryClient();
+  const { authorLabel } = useAuth();
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["order-comments", orderId],
@@ -54,7 +56,7 @@ const addComment = useMutation({
           order_id: orderId,
           content,
           type: "comment",
-          author: "Użytkownik"
+          author: authorLabel
         }
       ]);
 

@@ -11,6 +11,7 @@ import PrintTypeSelect from "@/components/orders/PrintTypeSelect";
 import OrderActivity from "@/components/orders/OrderActivity";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/lib/AuthContext";
 
 const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
@@ -41,6 +42,7 @@ export default function OrderForm() {
   const orderId = urlParams.get("id");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { authorLabel } = useAuth();
 
   const freshEmptyForm = () => ({
     ...emptyForm,
@@ -242,7 +244,7 @@ for (const field of TRACKED_FIELDS) {
         order_id: orderId,
         type: "history",
         content: `Zmiana: ${FIELD_LABELS_SAVE[field]}`,
-        author: "Użytkownik",
+        author: authorLabel,
         field_changed: field,
         old_value: oldVal,
         new_value: newVal,
@@ -275,7 +277,7 @@ for (const field of TRACKED_FIELDS) {
         order_id: inserted.id,
         type: "history",
         content: "Utworzono zlecenie",
-        author: "Użytkownik"
+        author: authorLabel
       }]);
 
     if (historyError) {

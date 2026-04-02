@@ -40,6 +40,16 @@ export const AuthProvider = ({ children }) => {
     user?.user_metadata?.username ||
     user?.user_metadata?.login ||
     (user?.email ? user.email.split('@')[0] : null);
+  const displayName =
+    user?.user_metadata?.display_name ||
+    user?.user_metadata?.displayName ||
+    null;
+
+  const authorLabel = useMemo(() => {
+    const dn = String(displayName || '').trim();
+    const un = String(username || '').trim();
+    return dn || un || 'Użytkownik';
+  }, [displayName, username]);
 
   const role = useMemo(() => {
     const u = normalizeUsername(username);
@@ -83,12 +93,23 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
+  const updateProfile = async ({ username: newUsername, displayName: newDisplayName }) => {
+    setAuthError(null);
+    const data = {};
+    if (newUsername !== undefined) data.username = newUsername;
+    if (newDisplayName !== undefined) data.display_name = newDisplayName;
+    const { error } = await supabase.auth.updateUser({ data });
+    if (error) throw error;
+  };
+
   return (
     <AuthContext.Provider
       value={{
         session,
         user,
         username,
+        displayName,
+        authorLabel,
         role,
         isAuthenticated,
         isLoadingAuth,
@@ -96,6 +117,7 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signUp,
         signOut,
+        updateProfile,
       }}
     >
       {children}

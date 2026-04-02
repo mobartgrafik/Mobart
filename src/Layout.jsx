@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2 } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
+import { useAuth } from "@/lib/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { name: "Dashboard", label: "Pulpit", icon: LayoutDashboard },
@@ -16,6 +18,7 @@ const NAV_ITEMS = [
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { authorLabel, signOut } = useAuth();
 
   useEffect(() => {
     const handler = (e) => {
@@ -119,6 +122,24 @@ export default function Layout({ children, currentPageName }) {
             <kbd className="hidden sm:inline text-xs border border-zinc-700 rounded px-1">Ctrl+K</kbd>
           </button>
           <div className="flex-1" />
+          <div className="flex items-center gap-2">
+            <Link
+              to="/profile"
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/30 border border-zinc-800/60 text-zinc-300 hover:text-zinc-100 hover:border-zinc-700 transition-colors text-sm"
+            >
+              <User2 className="w-4 h-4" />
+              <span className="max-w-40 truncate">{authorLabel}</span>
+            </Link>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => signOut()}
+              className="bg-zinc-800/20 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 gap-2"
+            >
+              <LogOut className="w-4 h-4" />
+              Wyloguj
+            </Button>
+          </div>
         </header>
         <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
 

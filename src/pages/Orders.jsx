@@ -13,12 +13,14 @@ import { createPageUrl } from "@/utils";
 import OrdersTable from "@/components/orders/OrdersTable";
 import KanbanBoard from "@/components/orders/KanbanBoard";
 import CalendarView from "@/components/orders/CalendarView";
+import { useAuth } from "@/lib/AuthContext";
 
 const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
 
 export default function Orders() {
   const navigate = useNavigate();
+  const { authorLabel } = useAuth();
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Wszystkie");
@@ -66,7 +68,7 @@ const deleteMutation = useMutation({
         order_id: order.id,
         type: "history",
         content: `Usunięto zlecenie: ${order.title}`,
-        author: "Użytkownik"
+        author: authorLabel
       }]);
 
   },

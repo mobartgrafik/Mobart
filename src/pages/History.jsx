@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
+import { useAuth } from "@/lib/AuthContext";
 
 const FIELD_LABELS = {
   status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik",
@@ -53,6 +54,7 @@ export default function History() {
   const [revertingId, setRevertingId] = useState(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { authorLabel } = useAuth();
 
   const { data: rawComments = [], isLoading: loadingComments } = useQuery({
     queryKey: ["all-comments"],
@@ -121,7 +123,7 @@ export default function History() {
     order_id: entry.order_id,
     type: "history",
     content: `Cofnięto zmianę: ${FIELD_LABELS[entry.field_changed] || entry.field_changed}`,
-    author: "Użytkownik",
+    author: authorLabel,
     field_changed: entry.field_changed,
     old_value: entry.new_value,
     new_value: entry.old_value,
