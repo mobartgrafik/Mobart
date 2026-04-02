@@ -189,7 +189,7 @@ const data = {
                   <SelectValue placeholder="Wybierz pracownika" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  <SelectItem value="" className="text-zinc-100 focus:bg-zinc-700">—</SelectItem>
+                  <SelectItem value="" className="text-zinc-100 focus:bg-zinc-700">Brak</SelectItem>
                   {EMPLOYEES.map(name => (
                     <SelectItem key={name} value={name} className="text-zinc-100 focus:bg-zinc-700">
                       {name}
