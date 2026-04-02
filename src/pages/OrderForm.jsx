@@ -54,6 +54,7 @@ export default function OrderForm() {
   const [originalForm, setOriginalForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients"],
@@ -111,6 +112,33 @@ const { data, error } = await supabase
   }, [existingOrder, clients]);
 
   const set = (key, val) => setForm(prev => ({ ...prev, [key]: val }));
+  const normalizedClientInput = String(form.client_name || "").trim().toLowerCase();
+  const filteredClients = clients
+    .filter(c => String(c.name || "").toLowerCase().includes(normalizedClientInput))
+    .slice(0, 8);
+  const exactClientMatch = clients.find(
+    c => String(c.name || "").toLowerCase() === normalizedClientInput
+  );
+
+  const handleClientInputChange = (value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    const matched = clients.find(c => String(c.name || "").toLowerCase() === normalized);
+    setForm(prev => ({
+      ...prev,
+      client_name: value,
+      client_id: matched ? String(matched.id) : "",
+    }));
+    setClientDropdownOpen(true);
+  };
+
+  const selectClient = (client) => {
+    setForm(prev => ({
+      ...prev,
+      client_name: client.name,
+      client_id: String(client.id),
+    }));
+    setClientDropdownOpen(false);
+  };
 
   // Sets a datetime-local field to today/tomorrow while preserving current time portion (if any).
   const applyQuickDate = (key, dayOffset) => {
@@ -475,23 +503,49 @@ const downloadFile = async (url, name) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Klient *</Label>
-              <Input
-                list="order-clients-list"
-                value={form.client_name || ""}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  set("client_name", v);
-                  const matched = clients.find(c => String(c.name || "").toLowerCase() === String(v || "").trim().toLowerCase());
-                  set("client_id", matched ? String(matched.id) : "");
-                }}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100"
-                placeholder="Wpisz nazwę klienta lub wybierz z podpowiedzi"
-              />
-              <datalist id="order-clients-list">
-                {clients.map(c => (
-                  <option key={c.id} value={c.name} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <Input
+                  value={form.client_name || ""}
+                  onChange={(e) => handleClientInputChange(e.target.value)}
+                  onFocus={() => setClientDropdownOpen(true)}
+                  onBlur={() => setTimeout(() => setClientDropdownOpen(false), 150)}
+                  className="bg-zinc-800 border-zinc-700 text-zinc-100"
+                  placeholder="Wpisz nazwę klienta..."
+                />
+                {clientDropdownOpen && (
+                  <div className="absolute z-20 mt-1 w-full rounded-md border border-zinc-700 bg-zinc-900 shadow-lg overflow-hidden">
+                    {filteredClients.length > 0 ? (
+                      <div className="max-h-56 overflow-y-auto">
+                        {filteredClients.map(c => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => selectClient(c)}
+                            className="w-full text-left px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
+                          >
+                            {c.name}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-zinc-500">Brak pasujących klientów</div>
+                    )}
+                    {String(form.client_name || "").trim() && !exactClientMatch && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm(prev => ({ ...prev, client_id: "", client_name: prev.client_name.trim() }));
+                          setAddClientToDatabase(true);
+                          setClientDropdownOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-zinc-800 border-t border-zinc-800"
+                      >
+                        + Dodaj nowego klienta: "{form.client_name.trim()}"
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
               {!form.client_id && String(form.client_name || "").trim() && (
                 <div className="mt-2 text-xs text-amber-400">
                   Klient nie istnieje jeszcze w bazie.
