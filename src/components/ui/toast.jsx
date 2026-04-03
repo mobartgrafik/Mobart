@@ -15,14 +15,14 @@ ToastProvider.displayName = "ToastProvider";
 const ToastViewport = React.forwardRef(({ ...props }, ref) => (
   <div
     ref={ref}
-    className="pointer-events-auto flex max-h-screen w-full flex-col-reverse gap-2 sm:w-auto sm:flex-col md:max-w-[420px]"
+    className="pointer-events-auto flex w-[min(92vw,360px)] flex-col-reverse gap-2 sm:flex-col"
     {...props}
   />
 ));
 ToastViewport.displayName = "ToastViewport";
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex min-h-14 w-full items-center justify-between gap-3 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-900/95 p-3.5 pr-8 text-zinc-100 shadow-2xl backdrop-blur transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-3 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-out-to-right-full data-[state=open]:duration-300 data-[state=closed]:duration-200 data-[state=open]:ease-out data-[state=closed]:ease-in",
+  "group pointer-events-auto relative flex min-h-14 w-full items-center justify-between gap-3 overflow-hidden rounded-xl border border-zinc-700/80 bg-zinc-900/95 p-3.5 pr-8 text-zinc-100 shadow-2xl backdrop-blur transition-all animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-3 duration-300 ease-out",
   {
     variants: {
       variant: {

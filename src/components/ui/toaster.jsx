@@ -14,6 +14,10 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {
+        const handleClose = () => {
+          props.onOpenChange?.(false);
+        };
+
         return (
           <Toast key={id} {...props}>
             <div className="grid gap-1">
@@ -23,7 +27,7 @@ export function Toaster() {
               )}
             </div>
             {action}
-            <ToastClose />
+            <ToastClose onClick={handleClose} />
           </Toast>
         );
       })}
