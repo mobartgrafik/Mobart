@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/AuthContext";
+import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
 
 const FIELD_LABELS = {
   status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik",
@@ -55,6 +56,8 @@ export default function History() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { authorLabel, avatarUrl } = useAuth();
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewOrder, setPreviewOrder] = useState(null);
 
   const { data: rawComments = [], isLoading: loadingComments } = useQuery({
     queryKey: ["all-comments"],
@@ -137,6 +140,13 @@ export default function History() {
     toast.success("Zmiana cofnięta");
   };
 
+  const handlePreview = (orderId) => {
+    const o = orders.find((x) => String(x.id) === String(orderId));
+    if (!o) return;
+    setPreviewOrder(o);
+    setPreviewOpen(true);
+  };
+
   const formatDate = (d) => {
     if (!d) return "";
     try { return format(new Date(d), "d MMM yyyy, HH:mm", { locale: pl }); }
@@ -151,7 +161,8 @@ export default function History() {
   });
 
   return (
-    <div className="space-y-5 max-w-4xl">
+    <>
+      <div className="space-y-5 max-w-4xl">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-zinc-100">Historia zmian</h1>
         <span className="text-sm text-zinc-500">{filtered.length} wpisów</span>
@@ -202,7 +213,7 @@ export default function History() {
                     onRevert={handleRevert}
                     revertingId={revertingId}
                     formatDate={formatDate}
-                    navigate={navigate}
+                    onPreview={handlePreview}
                   />
                 ))}
               </div>
@@ -210,11 +221,21 @@ export default function History() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+      <OrderPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        order={previewOrder}
+        onEdit={(o) => {
+          setPreviewOpen(false);
+          navigate(createPageUrl("OrderForm") + "?id=" + o.id);
+        }}
+      />
+    </>
   );
 }
 
-function HistoryRow({ entry, onRevert, revertingId, formatDate, navigate }) {
+function HistoryRow({ entry, onRevert, revertingId, formatDate, onPreview }) {
   const isHistory = entry.type === "history";
   const canRevert = isHistory && entry.field_changed && entry.old_value;
 
@@ -237,7 +258,7 @@ function HistoryRow({ entry, onRevert, revertingId, formatDate, navigate }) {
           <span className="text-xs font-semibold text-zinc-300">{entry.author || "System"}</span>
           <span className="text-xs text-zinc-600">{formatDate(entry.created_at)}</span>
           <button
-            onClick={() => navigate(createPageUrl("OrderForm") + "?id=" + entry.order_id)}
+            onClick={() => onPreview(entry.order_id)}
             className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-400 transition-colors"
           >
             {entry.order_title || entry.order_id}
