@@ -16,7 +16,6 @@ import CalendarView from "@/components/orders/CalendarView";
 import { useAuth } from "@/lib/AuthContext";
 import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
-import { useToast } from "@/components/ui/use-toast";
 
 const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
@@ -24,7 +23,6 @@ const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
 export default function Orders() {
   const navigate = useNavigate();
   const { authorLabel, avatarUrl } = useAuth();
-  const { toast } = useToast();
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Wszystkie");
@@ -84,22 +82,13 @@ const deleteMutation = useMutation({
       }]);
 
   },
-  onSuccess: (_, order) => {
+  onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["orders"] });
     queryClient.invalidateQueries({ queryKey: ["all-comments"] });
-
-    toast({
-      title: "Usunięto zlecenie",
-      description: order?.title ? `„${order.title}” zostało usunięte.` : "Zlecenie zostało usunięte.",
-    });
   },
   onError: (error) => {
     console.error(error);
-    toast({
-      variant: "destructive",
-      title: "Błąd przy usuwaniu",
-      description: "Nie udało się usunąć zlecenia. Spróbuj ponownie.",
-    });
+    alert("Nie udało się usunąć zlecenia. Spróbuj ponownie.");
   },
 });
 
