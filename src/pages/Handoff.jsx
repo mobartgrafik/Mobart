@@ -6,6 +6,7 @@ import { Printer, CheckCircle, Calendar, User, FileText, ArrowRight } from "luci
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import PriorityBadge from "@/components/orders/PriorityBadge";
+import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 
 export default function Handoff() {
   const queryClient = useQueryClient();
@@ -18,7 +19,11 @@ export default function Handoff() {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []).map((o) => ({
+        ...o,
+        status: normalizeOrderStatus(o.status),
+        priority: normalizeOrderPriority(o.priority),
+      }));
     },
   });
 

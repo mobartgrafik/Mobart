@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Search, FileText, Users, X, ArrowRight } from "lucide-react";
+import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 
 export default function GlobalSearch({ open, onClose }) {
   const [query, setQuery] = useState("");
@@ -18,7 +19,11 @@ export default function GlobalSearch({ open, onClose }) {
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data || [];
+      return (data || []).map((o) => ({
+        ...o,
+        status: normalizeOrderStatus(o.status),
+        priority: normalizeOrderPriority(o.priority),
+      }));
     },
   });
 

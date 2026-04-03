@@ -25,21 +25,13 @@ import { Pencil, Trash2, User, FileText, Download } from "lucide-react";
 
 import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
+import { ORDER_PRIORITIES, ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 
 const STATUSES = [
-"Nowe",
-"W trakcie",
-"Do przekazania",
-"Przekazane",
-"Zakończone"
+  ...ORDER_STATUSES
 ];
 
-const PRIORITIES = [
-"Niski",
-"Normalny",
-"Wysoki",
-"Pilne"
-];
+const PRIORITIES = [...ORDER_PRIORITIES];
 
 const SETTLEMENT_COLORS = {
 "nierozliczone": "text-red-400",
@@ -77,23 +69,23 @@ return "—";
 }
 };
 
-const changeStatus = async (order, status) => {
-await supabase
-.from("orders")
-.update({ status })
-.eq("id", order.id);
+  const changeStatus = async (order, status) => {
+    await supabase
+      .from("orders")
+      .update({ status: normalizeOrderStatus(status) })
+      .eq("id", order.id);
 
-queryClient.invalidateQueries({ queryKey: ["orders"] });
-};
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+  };
 
-const changePriority = async (order, priority) => {
-await supabase
-.from("orders")
-.update({ priority })
-.eq("id", order.id);
+  const changePriority = async (order, priority) => {
+    await supabase
+      .from("orders")
+      .update({ priority: normalizeOrderPriority(priority) })
+      .eq("id", order.id);
 
-queryClient.invalidateQueries({ queryKey: ["orders"] });
-};
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+  };
 
 const downloadFile = async (url, name) => {
 try {
@@ -122,7 +114,13 @@ return (
 );
 }
 
-return (
+  const normalizedOrders = orders.map((o) => ({
+    ...o,
+    status: normalizeOrderStatus(o.status),
+    priority: normalizeOrderPriority(o.priority),
+  }));
+
+  return (
 <div className="overflow-x-auto">
 <Table>
 <TableHeader>
@@ -145,7 +143,7 @@ return (
 </TableHeader>
 
 <TableBody>
-{orders.map(order => (
+{normalizedOrders.map(order => (
 <TableRow
 key={order.id}
 className="border-zinc-800/50 hover:bg-zinc-800/30 cursor-pointer"

@@ -2,21 +2,27 @@ import React from "react";
 import { supabase } from "@/supabase";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
-import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
 import { User, Calendar, FileText } from "lucide-react";
+import { ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 
-const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Przekazane", "Zakończone"];
+const STATUSES = [...ORDER_STATUSES];
 
 const columnColors = {
   "Nowe": "border-t-blue-500",
   "W trakcie": "border-t-amber-500",
   "Do przekazania": "border-t-purple-500",
-  "Przekazane": "border-t-emerald-500",
+  "Wydrukowane": "border-t-emerald-500",
   "Zakończone": "border-t-zinc-500",
 };
 
 export default function KanbanBoard({ orders, onEdit, onRefresh }) {
+  const normalizedOrders = orders.map((o) => ({
+    ...o,
+    status: normalizeOrderStatus(o.status),
+    priority: normalizeOrderPriority(o.priority),
+  }));
+
 const handleDrop = async (e, newStatus) => {
   e.preventDefault();
 
@@ -25,7 +31,7 @@ const handleDrop = async (e, newStatus) => {
 
   const { error } = await supabase
     .from("orders")
-    .update({ status: newStatus })
+    .update({ status: normalizeOrderStatus(newStatus) })
     .eq("id", orderId);
 
   if (error) {
@@ -39,7 +45,7 @@ const handleDrop = async (e, newStatus) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {STATUSES.map(status => {
-        const columnOrders = orders.filter(o => o.status === status);
+        const columnOrders = normalizedOrders.filter(o => o.status === status);
         return (
           <div key={status}
             className={`bg-zinc-900/50 rounded-xl border border-zinc-800/50 border-t-2 ${columnColors[status]} min-h-[300px]`}

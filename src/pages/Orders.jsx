@@ -14,6 +14,7 @@ import OrdersTable from "@/components/orders/OrdersTable";
 import KanbanBoard from "@/components/orders/KanbanBoard";
 import CalendarView from "@/components/orders/CalendarView";
 import { useAuth } from "@/lib/AuthContext";
+import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 
 const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
@@ -46,7 +47,11 @@ const { data: orders = [], isLoading } = useQuery({
       return [];
     }
 
-    return data;
+    return (data || []).map((o) => ({
+      ...o,
+      status: normalizeOrderStatus(o.status),
+      priority: normalizeOrderPriority(o.priority),
+    }));
   },
 });
 

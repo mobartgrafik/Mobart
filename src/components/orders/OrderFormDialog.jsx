@@ -8,15 +8,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X, FileText, Image } from "lucide-react";
 import PrintTypeSelect from "./PrintTypeSelect";
+import { ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 
-const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Przekazane", "Zakończone"];
+const STATUSES = [...ORDER_STATUSES];
 const PRIORITIES = ["niski", "średni", "wysoki"];
 const EMPLOYEES = ["Kinga", "Kinga Noszczyk", "Klaudia", "Gabryś", "Łukasz", "Darek", "Robert", "Artur"];
 
 export default function OrderFormDialog({ open, onOpenChange, order, clients, onSaved }) {
   const [form, setForm] = useState({
     title: "", client_id: "", client_name: "", status: "Nowe", priority: "średni",
-    deadline: "", description: "", assignee: "", print_type: "", files: []
+    deadline: "", description: "", assignee: "",
+    print_type: "", channel: "", meters: null, settlement: "",
+    files: []
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -36,34 +39,75 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
         title: order.title || "",
         client_id: order.client_id || "",
         client_name: order.client_name || "",
-        status: order.status || "Nowe",
-        priority: order.priority || "średni",
+        status: normalizeOrderStatus(order.status) || "Nowe",
+        priority: normalizeOrderPriority(order.priority) || "średni",
         print_type: order.print_type || "",
+        channel: order.channel || "",
+        meters: order.meters ?? null,
+        settlement: order.settlement || "",
         deadline: order.deadline || "",
         description: order.description || "",
         assignee: order.assignee || "",
         files: order.files || []
       });
     } else {
-      setForm({ title: "", client_id: "", client_name: "", status: "Nowe", priority: "średni", deadline: "", description: "", assignee: "", files: [] });
+      setForm({
+        title: "",
+        client_id: "",
+        client_name: "",
+        status: "Nowe",
+        priority: "średni",
+        print_type: "",
+        channel: "",
+        meters: null,
+        settlement: "",
+        deadline: "",
+        description: "",
+        assignee: "",
+        files: []
+      });
     }
   }, [order, open]);
 
-const handleFileUpload = async (e) => {
-  const fileList = Array.from(e.target.files);
-  if (!fileList.length) return;
+  const handleFileUpload = async (e) => {
+    const fileList = Array.from(e.target.files || []);
+    if (!fileList.length) return;
 
-  const newFiles = fileList.map(file => ({
-    name: file.name,
-    url: "",
-    type: file.type
-  }));
+    setUploading(true);
+    try {
+      const newFiles = [];
 
-  setForm(prev => ({
-    ...prev,
-    files: [...prev.files, ...newFiles]
-  }));
-};
+      for (const file of fileList) {
+        const fileName = `${Date.now()}-${file.name}`;
+
+        const { error } = await supabase.storage
+          .from("order-files")
+          .upload(fileName, file);
+
+        if (error) {
+          console.error("Upload error:", error);
+          continue;
+        }
+
+        const { data } = supabase.storage
+          .from("order-files")
+          .getPublicUrl(fileName);
+
+        newFiles.push({
+          name: file.name,
+          url: data.publicUrl,
+          type: file.type,
+        });
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        files: [...prev.files, ...newFiles],
+      }));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const removeFile = (idx) => {
     setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
@@ -294,8 +338,15 @@ const data = {
               ))}
               <label className="flex items-center gap-2 cursor-pointer bg-zinc-800 hover:bg-zinc-750 border border-dashed border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-300">
                 {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                {uploading ? "Przesyłanie..." : "Dodaj pliki (PDF, JPG, AI, PSD)"}
-                <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.ai,.psd" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+                {uploading ? "Przesyłanie..." : "Dodaj pliki (PDF, JPG, AI, PSD, CDR)"}
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.ai,.psd,.cdr"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                />
               </label>
             </div>
           </div>

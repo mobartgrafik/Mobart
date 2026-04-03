@@ -3,7 +3,7 @@ import { supabase } from "@/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Clock, Send, Loader2, User } from "lucide-react";
+import { MessageSquare, Clock, Send, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import { useAuth } from "@/lib/AuthContext";

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 
 const STATUS_COLORS = {
   "Nowe": "bg-blue-600/80 border-blue-500",
@@ -20,6 +21,12 @@ export default function CalendarView({ orders, onEdit }) {
   const [dragOver, setDragOver] = useState(null);
   const queryClient = useQueryClient();
 
+  const normalizedOrders = orders.map((o) => ({
+    ...o,
+    status: normalizeOrderStatus(o.status),
+    priority: normalizeOrderPriority(o.priority),
+  }));
+
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const calStart = startOfWeek(monthStart, { weekStartsOn: 1 });
@@ -33,7 +40,7 @@ export default function CalendarView({ orders, onEdit }) {
   }
 
   const getOrdersForDay = (date) =>
-    orders.filter(o => {
+    normalizedOrders.filter(o => {
       if (!o.deadline) return false;
       try { return isSameDay(parseISO(o.deadline), date); }
       catch { return false; }
@@ -79,6 +86,12 @@ export default function CalendarView({ orders, onEdit }) {
   setDragging(null);
   setDragOver(null);
 };
+
+  // Clear dragging state when the user releases the draggable item.
+  const handleDragEnd = () => {
+    setDragging(null);
+    setDragOver(null);
+  };
 
 
   const WEEK_DAYS = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"];
