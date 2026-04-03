@@ -250,7 +250,10 @@ const handleSave = async (andNew = false) => {
   if (!client && addClientToDatabase) {
     const { data: insertedClient, error: clientInsertError } = await supabase
       .from("clients")
-      .insert([{ name: normalizedClientName }])
+      .insert([{
+        name: normalizedClientName,
+        phone: "",
+      }])
       .select()
       .single();
 
