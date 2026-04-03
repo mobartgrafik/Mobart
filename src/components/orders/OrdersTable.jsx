@@ -52,6 +52,7 @@ files: true
 
 export default function OrdersTable({
 orders,
+onPreview,
 onEdit,
 onDelete,
 visibleCols = defaultCols
@@ -147,7 +148,7 @@ return (
 <TableRow
 key={order.id}
 className="border-zinc-800/50 hover:bg-zinc-800/30 cursor-pointer"
-onClick={() => onEdit(order)}
+onClick={() => onPreview?.(order)}
 >
 
 <TableCell>{order.title}</TableCell>

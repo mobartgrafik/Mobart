@@ -16,7 +16,7 @@ const columnColors = {
   "Zakończone": "border-t-zinc-500",
 };
 
-export default function KanbanBoard({ orders, onEdit, onRefresh }) {
+export default function KanbanBoard({ orders, onPreview, onRefresh }) {
   const normalizedOrders = orders.map((o) => ({
     ...o,
     status: normalizeOrderStatus(o.status),
@@ -61,7 +61,7 @@ const handleDrop = async (e, newStatus) => {
                 <div key={order.id}
                   draggable
                   onDragStart={e => e.dataTransfer.setData("orderId", String(order.id))}
-                  onClick={() => onEdit(order)}
+                  onClick={() => onPreview?.(order)}
                   className="bg-zinc-800/80 hover:bg-zinc-800 rounded-lg p-3 cursor-pointer border border-zinc-700/30 hover:border-zinc-700"
                 >
                   <p className="text-zinc-100 text-sm font-medium mb-1.5">{order.title}</p>

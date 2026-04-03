@@ -15,6 +15,7 @@ import KanbanBoard from "@/components/orders/KanbanBoard";
 import CalendarView from "@/components/orders/CalendarView";
 import { useAuth } from "@/lib/AuthContext";
 import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
+import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
 
 const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
@@ -30,6 +31,9 @@ export default function Orders() {
     printType: true, priority: true, deadline: true, assignee: true, files: true,
     channel: true, meters: true, settlement: true
   });
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewOrder, setPreviewOrder] = useState(null);
 
   const toggleCol = (col) => setVisibleCols(prev => ({ ...prev, [col]: !prev[col] }));
   const queryClient = useQueryClient();
@@ -92,6 +96,10 @@ const deleteMutation = useMutation({
   });
 
   const handleEdit = (order) => navigate(createPageUrl("OrderForm") + "?id=" + order.id);
+  const handlePreview = (order) => {
+    setPreviewOrder(order);
+    setPreviewOpen(true);
+  };
   const handleDelete = (order) => { 
   if (confirm("Usunąć zlecenie \"" + order.title + "\"?")) 
     deleteMutation.mutate(order); 
@@ -176,13 +184,29 @@ const deleteMutation = useMutation({
         <div className="text-center py-16 text-zinc-500">Ładowanie...</div>
       ) : view === "table" ? (
         <div className="bg-zinc-900/50 rounded-xl border border-zinc-800/50">
-          <OrdersTable orders={filtered} onEdit={handleEdit} onDelete={handleDelete} visibleCols={visibleCols} />
+          <OrdersTable
+            orders={filtered}
+            onPreview={handlePreview}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            visibleCols={visibleCols}
+          />
         </div>
       ) : view === "kanban" ? (
-        <KanbanBoard orders={filtered} onEdit={handleEdit} onRefresh={handleRefresh} />
+        <KanbanBoard orders={filtered} onPreview={handlePreview} onRefresh={handleRefresh} />
       ) : (
-        <CalendarView orders={filtered} onEdit={handleEdit} />
+        <CalendarView orders={filtered} onPreview={handlePreview} />
       )}
+
+      <OrderPreviewDialog
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        order={previewOrder}
+        onEdit={(o) => {
+          setPreviewOpen(false);
+          handleEdit(o);
+        }}
+      />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import StatusBadge from "@/components/orders/StatusBadge";
 import PriorityBadge from "@/components/orders/PriorityBadge";
 import ClientFormDialog from "@/components/clients/ClientFormDialog";
 import OrderFormDialog from "@/components/orders/OrderFormDialog";
+import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
 import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 
@@ -19,6 +20,8 @@ export default function ClientDetail() {
   const [editClientOpen, setEditClientOpen] = useState(false);
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [orderPreviewOpen, setOrderPreviewOpen] = useState(false);
+  const [orderPreviewOrder, setOrderPreviewOrder] = useState(null);
 
 const { data: clients = [] } = useQuery({
   queryKey: ["clients"],
@@ -104,7 +107,12 @@ const { data: allOrders = [] } = useQuery({
       ) : (
         <div className="space-y-2">
           {clientOrders.map(order => (
-            <div key={order.id} onClick={() => { setEditingOrder(order); setOrderDialogOpen(true); }}
+            <div
+              key={order.id}
+              onClick={() => {
+                setOrderPreviewOrder(order);
+                setOrderPreviewOpen(true);
+              }}
               className="bg-zinc-900/50 border border-zinc-800/50 rounded-lg p-4 hover:bg-zinc-800/30 cursor-pointer flex items-center justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <p className="text-zinc-100 font-medium">{order.title}</p>
@@ -126,6 +134,16 @@ const { data: allOrders = [] } = useQuery({
       <OrderFormDialog open={orderDialogOpen} onOpenChange={setOrderDialogOpen}
         order={editingOrder ? editingOrder : { client_id: clientId, client_name: client.name }}
         clients={clients} onSaved={handleRefresh} />
+      <OrderPreviewDialog
+        open={orderPreviewOpen}
+        onOpenChange={setOrderPreviewOpen}
+        order={orderPreviewOrder}
+        onEdit={(o) => {
+          setOrderPreviewOpen(false);
+          setEditingOrder(o);
+          setOrderDialogOpen(true);
+        }}
+      />
     </div>
   );
 }

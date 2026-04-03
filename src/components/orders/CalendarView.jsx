@@ -15,7 +15,7 @@ const STATUS_COLORS = {
   "Zakończone": "bg-green-700/80 border-green-600",
 };
 
-export default function CalendarView({ orders, onEdit }) {
+export default function CalendarView({ orders, onPreview }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dragging, setDragging] = useState(null);
   const [dragOver, setDragOver] = useState(null);
@@ -155,7 +155,7 @@ export default function CalendarView({ orders, onEdit }) {
                     draggable
                     onDragStart={(e) => handleDragStart(e, order)}
                     onDragEnd={handleDragEnd}
-                    onClick={() => onEdit(order)}
+                    onClick={() => onPreview?.(order)}
                     className={`
                       px-1.5 py-0.5 rounded text-xs cursor-grab active:cursor-grabbing truncate
                       border-l-2 text-white font-medium hover:opacity-80 transition-opacity
