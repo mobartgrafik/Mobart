@@ -12,6 +12,7 @@ import OrderActivity from "@/components/orders/OrderActivity";
 import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 
 const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
@@ -43,6 +44,7 @@ export default function OrderForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { authorLabel, avatarUrl } = useAuth();
+  const { toast } = useToast();
   const [addClientToDatabase, setAddClientToDatabase] = useState(false);
 
   const freshEmptyForm = () => ({
@@ -329,6 +331,23 @@ for (const field of TRACKED_FIELDS) {
   }
 
   if (inserted) {
+    toast({
+      variant: "success",
+      title: "Nowe zlecenie",
+      description: inserted?.title ? `Dodano „${inserted.title}”.` : "Dodano nowe zlecenie.",
+    });
+
+    await supabase.channel("orders-realtime-toasts").send({
+      type: "broadcast",
+      event: "order-change",
+      payload: {
+        kind: "insert",
+        orderId: inserted?.id || null,
+        title: inserted?.title || "",
+        ts: Date.now(),
+      },
+    });
+
     const { error: historyError } = await supabase
       .from("order_comments")
       .insert([{

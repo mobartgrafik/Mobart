@@ -16,6 +16,7 @@ import CalendarView from "@/components/orders/CalendarView";
 import { useAuth } from "@/lib/AuthContext";
 import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
+import { useToast } from "@/components/ui/use-toast";
 
 const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
@@ -23,6 +24,7 @@ const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
 export default function Orders() {
   const navigate = useNavigate();
   const { authorLabel, avatarUrl } = useAuth();
+  const { toast } = useToast();
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Wszystkie");
@@ -82,9 +84,26 @@ const deleteMutation = useMutation({
       }]);
 
   },
-  onSuccess: () => {
+  onSuccess: async (_, order) => {
     queryClient.invalidateQueries({ queryKey: ["orders"] });
     queryClient.invalidateQueries({ queryKey: ["all-comments"] });
+
+    toast({
+      variant: "destructive",
+      title: "Usunięto zlecenie",
+      description: order?.title ? `Usunięto „${order.title}”.` : "Usunięto zlecenie.",
+    });
+
+    await supabase.channel("orders-realtime-toasts").send({
+      type: "broadcast",
+      event: "order-change",
+      payload: {
+        kind: "delete",
+        orderId: order?.id || null,
+        title: order?.title || "",
+        ts: Date.now(),
+      },
+    });
   },
   onError: (error) => {
     console.error(error);

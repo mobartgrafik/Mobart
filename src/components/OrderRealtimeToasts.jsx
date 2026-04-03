@@ -22,6 +22,43 @@ export default function OrderRealtimeToasts() {
 
     const channel = supabase
       .channel("orders-realtime-toasts")
+      .on("broadcast", { event: "order-change" }, ({ payload }) => {
+        const kind = payload?.kind;
+        const orderId = payload?.orderId || payload?.ts || "unknown";
+        const eventKey = `broadcast:${kind}:${orderId}`;
+        if (!rememberEvent(eventKey)) return;
+
+        if (kind === "insert") {
+          toast({
+            variant: "success",
+            title: "Nowe zlecenie",
+            description: payload?.title
+              ? `Dodano „${payload.title}”.`
+              : "Dodano nowe zlecenie.",
+            action: (
+              <div className="rounded-full bg-emerald-500/20 p-1.5 text-emerald-300 animate-in zoom-in-50 fade-in-0 duration-300">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+            ),
+          });
+          return;
+        }
+
+        if (kind === "delete") {
+          toast({
+            variant: "destructive",
+            title: "Usunięto zlecenie",
+            description: payload?.title
+              ? `Usunięto „${payload.title}”.`
+              : "Usunięto zlecenie.",
+            action: (
+              <div className="rounded-full bg-red-500/20 p-1.5 text-red-200 animate-in zoom-in-50 fade-in-0 duration-300">
+                <Trash2 className="h-4 w-4" />
+              </div>
+            ),
+          });
+        }
+      })
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "orders" },
