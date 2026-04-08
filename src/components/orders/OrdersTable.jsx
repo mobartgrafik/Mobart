@@ -26,6 +26,7 @@ import { Pencil, Trash2, User, FileText, Download } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
 import { ORDER_PRIORITIES, ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
+import { getStoredFileDownloadUrl } from "@/lib/fileStorage";
 
 const STATUSES = [
   ...ORDER_STATUSES
@@ -254,7 +255,7 @@ className="text-zinc-300 hover:bg-zinc-800"
 onClick={(e) => {
 e.stopPropagation();
 downloadFile(
-order.files[0].url,
+getStoredFileDownloadUrl(order.files[0]),
 order.files[0].name
 );
 }}

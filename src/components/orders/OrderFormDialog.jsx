@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload, X, FileText, Image } from "lucide-react";
 import PrintTypeSelect from "./PrintTypeSelect";
 import { ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
+import { getStorageProviderLabel, getStoredFilePreviewUrl, uploadOrderFiles } from "@/lib/fileStorage";
 
 const STATUSES = [...ORDER_STATUSES];
 const PRIORITIES = ["niski", "średni", "wysoki"];
@@ -32,6 +33,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
   const exactClientMatch = clients.find(
     c => String(c.name || "").toLowerCase() === normalizedClientInput
   );
+  const storageProviderLabel = getStorageProviderLabel();
 
   useEffect(() => {
     if (order) {
@@ -75,37 +77,17 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
 
     setUploading(true);
     try {
-      const newFiles = [];
-
-      for (const file of fileList) {
-        const fileName = `${Date.now()}-${file.name}`;
-
-        const { error } = await supabase.storage
-          .from("order-files")
-          .upload(fileName, file);
-
-        if (error) {
-          console.error("Upload error:", error);
-          continue;
-        }
-
-        const { data } = supabase.storage
-          .from("order-files")
-          .getPublicUrl(fileName);
-
-        newFiles.push({
-          name: file.name,
-          url: data.publicUrl,
-          type: file.type,
-        });
-      }
+      const newFiles = await uploadOrderFiles(fileList);
 
       setForm((prev) => ({
         ...prev,
         files: [...prev.files, ...newFiles],
       }));
+    } catch (err) {
+      console.error("Upload error:", err);
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -332,13 +314,13 @@ const data = {
               {form.files.map((f, i) => (
                 <div key={i} className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 text-sm">
                   {getFileIcon(f.type)}
-                  <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-zinc-300 hover:text-white truncate flex-1">{f.name}</a>
+                  <a href={getStoredFilePreviewUrl(f)} target="_blank" rel="noopener noreferrer" className="text-zinc-300 hover:text-white truncate flex-1">{f.name}</a>
                   <button onClick={() => removeFile(i)} className="text-zinc-500 hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
                 </div>
               ))}
               <label className="flex items-center gap-2 cursor-pointer bg-zinc-800 hover:bg-zinc-750 border border-dashed border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-300">
                 {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                {uploading ? "Przesyłanie..." : "Dodaj pliki (PDF, JPG, AI, PSD, CDR)"}
+                {uploading ? "Przesyłanie..." : `Dodaj pliki do ${storageProviderLabel} (PDF, JPG, AI, PSD, CDR)`}
                 <input
                   type="file"
                   multiple

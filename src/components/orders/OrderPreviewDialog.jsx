@@ -9,6 +9,7 @@ import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
 import { FileText, Pencil } from "lucide-react";
 import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
+import { getStoredFilePreviewUrl } from "@/lib/fileStorage";
 
 function safeFormatDate(value, pattern = "d MMM yyyy, HH:mm") {
   if (!value) return "—";
@@ -88,7 +89,7 @@ export default function OrderPreviewDialog({
                   {normalized.files.slice(0, 6).map((f, idx) => (
                     <a
                       key={`${f.url || f.name}-${idx}`}
-                      href={f.url}
+                      href={getStoredFilePreviewUrl(f)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-zinc-200 hover:text-white hover:border-zinc-600 text-xs"

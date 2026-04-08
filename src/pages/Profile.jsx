@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
-import { supabase } from "@/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { getStorageProviderLabel, uploadAvatarFile } from "@/lib/fileStorage";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,7 @@ export default function Profile() {
   const [changingLogin, setChangingLogin] = useState(false);
   const [confirmCurrentLogin, setConfirmCurrentLogin] = useState("");
   const [newLogin, setNewLogin] = useState("");
+  const storageProviderLabel = useMemo(() => getStorageProviderLabel(), []);
 
   const normalizedRole = useMemo(() => (role === "admin" ? "Administrator" : "Użytkownik"), [role]);
 
@@ -35,15 +36,8 @@ export default function Profile() {
       let uploadedAvatarUrl = undefined;
 
       if (newAvatarFile && user?.id) {
-        const ext = newAvatarFile.name?.split(".").pop() || "png";
-        const path = `${user.id}/${Date.now()}.${ext}`;
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(path, newAvatarFile, { upsert: true, contentType: newAvatarFile.type });
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-        uploadedAvatarUrl = data?.publicUrl;
+        const uploadedAvatar = await uploadAvatarFile(newAvatarFile, user.id);
+        uploadedAvatarUrl = uploadedAvatar?.downloadUrl || uploadedAvatar?.url;
       }
 
       await updateProfile({
@@ -53,7 +47,7 @@ export default function Profile() {
       toast.success("Profil zapisany");
       setNewAvatarFile(null);
     } catch (e) {
-      toast.error(e?.message || "Nie udało się zapisać profilu (sprawdź konfigurację bucketu `avatars` w Supabase)");
+      toast.error(e?.message || `Nie udało się zapisać profilu w ${storageProviderLabel}.`);
     } finally {
       setSaving(false);
     }
@@ -119,7 +113,7 @@ export default function Profile() {
               className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1"
             />
             <div className="text-xs text-zinc-600 mt-1">
-              Plik zapisuje się do Supabase Storage bucket `avatars` i jest podpinany do profilu.
+              Plik zapisuje się do {storageProviderLabel} i jest podpinany do profilu.
             </div>
           </div>
         </div>

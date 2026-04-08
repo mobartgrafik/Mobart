@@ -1,80 +1,57 @@
-\*\*Welcome to your Base44 project\*\* 
+# Mobart (Vite + React)
 
+Aplikacja frontendowa oparta o Vite.
 
+## Uruchomienie lokalne
 
-\*\*About\*\*
+1. Sklonuj repozytorium.
+2. Zainstaluj zależności:
+   ```bash
+   npm install
+   ```
+3. Utwórz plik `.env.local` i ustaw zmienne środowiskowe:
+   ```bash
+   VITE_BASE44_APP_ID=your_app_id
+   VITE_BASE44_APP_BASE_URL=your_backend_url
+   VITE_GOOGLE_DRIVE_CLIENT_ID=your_google_oauth_client_id
+   VITE_GOOGLE_DRIVE_ORDER_FILES_FOLDER_ID=optional_drive_folder_id
+   VITE_GOOGLE_DRIVE_AVATARS_FOLDER_ID=optional_drive_folder_id
+   ```
+4. Uruchom aplikację:
+   ```bash
+   npm run dev
+   ```
 
+## Zapis plików w Google Drive
 
+- Upload plików zleceń i avatarów działa tylko przez Google Drive bezpośrednio z frontendu.
+- Aplikacja używa OAuth klienta Google (`VITE_GOOGLE_DRIVE_CLIENT_ID`) i przy pierwszym uploadzie poprosi użytkownika o zgodę.
+- Zlecenia, klienci i pozostałe dane aplikacyjne dalej zapisują się do Supabase.
+- Jeśli nie ustawisz konfiguracji Google Drive, upload plików będzie zablokowany i aplikacja pokaże błąd konfiguracyjny.
+- Foldery `VITE_GOOGLE_DRIVE_ORDER_FILES_FOLDER_ID` i `VITE_GOOGLE_DRIVE_AVATARS_FOLDER_ID` są opcjonalne. Bez nich pliki trafią do głównego katalogu Drive zalogowanego użytkownika.
 
-View and Edit  your app on \[Base44.com](http://Base44.com) 
+## Automatyczne wdrażanie na Render.com
 
+Repo zawiera `render.yaml` (Blueprint), dzięki czemu Render może sam utworzyć i utrzymywać usługę.
 
+### Co jest skonfigurowane
 
-This project contains everything you need to run your app locally.
+- typ usługi: **Static Site**,
+- branch wdrożeniowy: `main`,
+- build command: `npm ci && npm run build`,
+- publish directory: `dist`,
+- fallback dla SPA: rewrite `/* -> /index.html`,
+- podglądy dla PR: włączone (`pullRequestPreviewsEnabled: true`).
 
+### Jak to podpiąć raz (jednorazowo)
 
+1. Wejdź na Render → **New +** → **Blueprint**.
+2. Połącz repozytorium GitHub z tym projektem.
+3. Wybierz branch `main` i potwierdź utworzenie usługi.
 
-\*\*Edit the code in your local development environment\*\*
+Po tej jednorazowej konfiguracji każdy `git push` na `main` uruchomi automatyczny build i deploy.
 
+## Uwaga o sekretach
 
-
-Any change pushed to the repo will also be reflected in the Base44 Builder.
-
-
-
-\*\*Prerequisites:\*\* 
-
-
-
-1\. Clone the repository using the project's Git URL 
-
-2\. Navigate to the project directory
-
-3\. Install dependencies: `npm install`
-
-4\. Create an `.env.local` file and set the right environment variables
-
-
-
-```
-
-VITE\_BASE44\_APP\_ID=your\_app\_id
-
-VITE\_BASE44\_APP\_BASE\_URL=your\_backend\_url
-
-
-
-e.g.
-
-VITE\_BASE44\_APP\_ID=cbef744a8545c389ef439ea6
-
-VITE\_BASE44\_APP\_BASE\_URL=https://my-to-do-list-81bfaad7.base44.app
-
-```
-
-
-
-Run the app: `npm run dev`
-
-
-
-\*\*Publish your changes\*\*
-
-
-
-Open \[Base44.com](http://Base44.com) and click on Publish.
-
-
-
-\*\*Docs \& Support\*\*
-
-
-
-Documentation: \[https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
-
-
-
-Support: \[https://app.base44.com/support](https://app.base44.com/support)
-
-
-
+Jeśli aplikacja wymaga dodatkowych zmiennych środowiskowych, ustaw je w Render:
+**Service → Environment**.

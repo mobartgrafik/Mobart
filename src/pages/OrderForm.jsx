@@ -13,6 +13,7 @@ import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import { getStorageProviderLabel, getStoredFileDownloadUrl, uploadOrderFiles } from "@/lib/fileStorage";
 
 const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
@@ -46,6 +47,7 @@ export default function OrderForm() {
   const { authorLabel, avatarUrl } = useAuth();
   const { toast } = useToast();
   const [addClientToDatabase, setAddClientToDatabase] = useState(false);
+  const storageProviderLabel = getStorageProviderLabel();
 
   const freshEmptyForm = () => ({
     ...emptyForm,
@@ -192,41 +194,22 @@ const handleTitleChange = (val) => {
 };
 
 const handleFileUpload = async (e) => {
-  const fileList = Array.from(e.target.files);
+  const fileList = Array.from(e.target.files || []);
   if (!fileList.length) return;
 
   setUploading(true);
-  const newFiles = [];
-
-  for (const file of fileList) {
-    const fileName = `${Date.now()}-${file.name}`;
-
-    const { error } = await supabase.storage
-      .from("order-files")
-      .upload(fileName, file);
-
-    if (error) {
-      console.error(error);
-      continue;
-    }
-
-    const { data } = supabase.storage
-      .from("order-files")
-      .getPublicUrl(fileName);
-
-    newFiles.push({
-      name: file.name,
-      url: data.publicUrl,
-      type: file.type
-    });
+  try {
+    const newFiles = await uploadOrderFiles(fileList);
+    setForm(prev => ({
+      ...prev,
+      files: [...prev.files, ...newFiles]
+    }));
+  } catch (err) {
+    console.error("Upload error:", err);
+  } finally {
+    setUploading(false);
+    e.target.value = "";
   }
-
-  setForm(prev => ({
-    ...prev,
-    files: [...prev.files, ...newFiles]
-  }));
-
-  setUploading(false);
 };
 
   const removeFile = (idx) => setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
@@ -387,7 +370,7 @@ if (andNew) {
   };
 
 const downloadFile = async (url, name) => {
-  try {
+try {
     const response = await fetch(url);
     const blob = await response.blob();
 
@@ -718,7 +701,7 @@ const downloadFile = async (url, name) => {
     <Button
       size="sm"
       variant="ghost"
-      onClick={() => downloadFile(f.url, f.name)}
+      onClick={() => downloadFile(getStoredFileDownloadUrl(f), f.name)}
       className="text-blue-400 hover:text-blue-300"
     >
       Pobierz
@@ -734,7 +717,7 @@ const downloadFile = async (url, name) => {
 ))}
           <label className="flex items-center gap-2 cursor-pointer bg-zinc-800 hover:bg-zinc-750 border border-dashed border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-300">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? "Przesyłanie..." : "Dodaj pliki (PDF, JPG, AI, PSD, CDR)"}
+            {uploading ? "Przesyłanie..." : `Dodaj pliki do ${storageProviderLabel} (PDF, JPG, AI, PSD, CDR)`}
             <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.ai,.psd,.cdr" className="hidden"
               onChange={handleFileUpload} disabled={uploading} />
           </label>
