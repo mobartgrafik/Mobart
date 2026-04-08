@@ -204,8 +204,22 @@ const handleFileUpload = async (e) => {
       ...prev,
       files: [...prev.files, ...newFiles]
     }));
+
+    const filesWithPermissionWarnings = newFiles.filter((file) => file.permissionError);
+    if (filesWithPermissionWarnings.length > 0) {
+      toast({
+        title: "Plik dodany z ograniczonym dostępem",
+        description: filesWithPermissionWarnings[0].permissionError,
+        duration: 6000,
+      });
+    }
   } catch (err) {
     console.error("Upload error:", err);
+    toast({
+      title: "Nie udało się dodać pliku",
+      description: err?.message || "Google Drive odrzucił upload pliku.",
+      duration: 7000,
+    });
   } finally {
     setUploading(false);
     e.target.value = "";

@@ -1,5 +1,5 @@
 const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
-const GOOGLE_DRIVE_UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType";
+const GOOGLE_DRIVE_UPLOAD_URL = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,mimeType,webViewLink,webContentLink";
 const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 
 let googleIdentityScriptPromise;
@@ -138,15 +138,23 @@ export async function uploadFileToGoogleDrive(file, { folderId, fileName = file.
   }
 
   const uploadedFile = await uploadResponse.json();
-  await createPublicPermission(uploadedFile.id, accessToken);
+  let permissionErrorMessage = "";
+
+  try {
+    await createPublicPermission(uploadedFile.id, accessToken);
+  } catch (error) {
+    permissionErrorMessage = error instanceof Error ? error.message : "Nie udało się nadać dostępu do pliku na Google Drive.";
+    console.error("Google Drive permission error:", error);
+  }
 
   return {
     id: uploadedFile.id,
     name: file.name,
     type: file.type || uploadedFile.mimeType || "",
     provider: "google-drive",
-    url: getDrivePreviewUrl(uploadedFile.id),
-    viewUrl: getDrivePreviewUrl(uploadedFile.id),
-    downloadUrl: getDriveDownloadUrl(uploadedFile.id),
+    url: uploadedFile.webViewLink || getDrivePreviewUrl(uploadedFile.id),
+    viewUrl: uploadedFile.webViewLink || getDrivePreviewUrl(uploadedFile.id),
+    downloadUrl: uploadedFile.webContentLink || getDriveDownloadUrl(uploadedFile.id),
+    permissionError: permissionErrorMessage,
   };
 }

@@ -10,6 +10,7 @@ import { Loader2, Upload, X, FileText, Image } from "lucide-react";
 import PrintTypeSelect from "./PrintTypeSelect";
 import { ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 import { getStorageProviderLabel, getStoredFilePreviewUrl, uploadOrderFiles } from "@/lib/fileStorage";
+import { useToast } from "@/components/ui/use-toast";
 
 const STATUSES = [...ORDER_STATUSES];
 const PRIORITIES = ["niski", "średni", "wysoki"];
@@ -34,6 +35,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
     c => String(c.name || "").toLowerCase() === normalizedClientInput
   );
   const storageProviderLabel = getStorageProviderLabel();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (order) {
@@ -83,8 +85,22 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
         ...prev,
         files: [...prev.files, ...newFiles],
       }));
+
+      const filesWithPermissionWarnings = newFiles.filter((file) => file.permissionError);
+      if (filesWithPermissionWarnings.length > 0) {
+        toast({
+          title: "Plik dodany z ograniczonym dostępem",
+          description: filesWithPermissionWarnings[0].permissionError,
+          duration: 6000,
+        });
+      }
     } catch (err) {
       console.error("Upload error:", err);
+      toast({
+        title: "Nie udało się dodać pliku",
+        description: err?.message || "Google Drive odrzucił upload pliku.",
+        duration: 7000,
+      });
     } finally {
       setUploading(false);
       e.target.value = "";
