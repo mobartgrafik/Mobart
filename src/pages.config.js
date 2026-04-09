@@ -56,6 +56,7 @@ import Handoff from './pages/Handoff';
 import History from './pages/History';
 import OrderForm from './pages/OrderForm';
 import Orders from './pages/Orders';
+import ServiceMode from './pages/ServiceMode';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +70,7 @@ export const PAGES = {
     "History": History,
     "OrderForm": OrderForm,
     "Orders": Orders,
+    "ServiceMode": ServiceMode,
 }
 
 export const pagesConfig = {

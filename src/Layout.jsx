@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2, Archive, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2, Archive, Sun, Moon, Settings2 } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,16 @@ const NAV_ITEMS = [
   { name: "Handoff", label: "Do przekazania", icon: Printer },
   { name: "History", label: "Historia zmian", icon: History },
   { name: "BannerCreator", label: "Kreator baneru", icon: Image },
+  { name: "ServiceMode", label: "Tryb serwisowy", icon: Settings2 },
 ];
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { authorLabel, avatarUrl, signOut } = useAuth();
+  const { authorLabel, avatarUrl, signOut, role } = useAuth();
   const { theme, setTheme } = useTheme();
+  const visibleNavItems = NAV_ITEMS.filter((item) => item.name !== "ServiceMode" || role === "admin");
 
   useEffect(() => {
     const handler = (e) => {
@@ -93,7 +95,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(item => {
+          {visibleNavItems.map(item => {
             const isActive = currentPageName === item.name;
             return (
               <Link key={item.name} to={createPageUrl(item.name)}

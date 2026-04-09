@@ -40,6 +40,7 @@ Repo zawiera `render.yaml` (Blueprint), dzięki czemu Render może sam utworzyć
 - branch wdrożeniowy: `main`,
 - build command: `npm ci && npm run build`,
 - publish directory: `dist`,
+- nazwa usługi: **mobart**,
 - fallback dla SPA: rewrite `/* -> /index.html`,
 - podglądy dla PR: włączone (`pullRequestPreviewsEnabled: true`).
 
@@ -55,3 +56,18 @@ Po tej jednorazowej konfiguracji każdy `git push` na `main` uruchomi automatycz
 
 Jeśli aplikacja wymaga dodatkowych zmiennych środowiskowych, ustaw je w Render:
 **Service → Environment**.
+
+## Tryb serwisowy wspólny dla wszystkich
+
+Konfiguracja kategorii i materiałów może działać wspólnie dla wszystkich użytkowników przez Supabase.
+
+1. Otwórz SQL Editor w Supabase.
+2. Wklej zawartość pliku [supabase/setup_print_type_settings.sql](/C:/Users/pc/Mobart/supabase/setup_print_type_settings.sql).
+3. Uruchom skrypt.
+
+Po utworzeniu tabeli `app_settings` ekran `Tryb serwisowy` zapisuje zmiany centralnie i nowe ustawienia są widoczne dla wszystkich na `https://mobart.onrender.com`.
+
+Jeżeli tabela nie istnieje jeszcze po deployu, aplikacja nie przestanie działać:
+- formularze dalej będą działały,
+- tryb serwisowy przełączy się awaryjnie na zapis lokalny w przeglądarce,
+- po wykonaniu SQL automatycznie zacznie używać Supabase.
