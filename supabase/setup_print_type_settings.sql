@@ -32,16 +32,23 @@ to authenticated
 using (true);
 
 drop policy if exists "authenticated users can manage print type config" on public.app_settings;
-create policy "authenticated users can manage print type config"
+drop policy if exists "authenticated users can manage service settings" on public.app_settings;
+create policy "authenticated users can manage service settings"
 on public.app_settings
 for all
 to authenticated
-using (key = 'print_type_config')
-with check (key = 'print_type_config');
+using (key in ('print_type_config', 'employee_list', 'designer_list'))
+with check (key in ('print_type_config', 'employee_list', 'designer_list'));
 
 insert into public.app_settings (key, value)
 values (
   'print_type_config',
   '[]'::jsonb
 )
+on conflict (key) do nothing;
+
+insert into public.app_settings (key, value)
+values
+  ('employee_list', '["Kinga","Kinga Noszczyk","Klaudia","Gabryś","Łukasz","Darek","Robert","Artur"]'::jsonb),
+  ('designer_list', '["Gabriel","Klaudia"]'::jsonb)
 on conflict (key) do nothing;

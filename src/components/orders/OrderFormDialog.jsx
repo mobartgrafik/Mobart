@@ -11,15 +11,14 @@ import PrintTypeSelect from "./PrintTypeSelect";
 import { ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFilePreviewUrl, getStoredFileSequenceLabel, uploadOrderFiles } from "@/lib/fileStorage";
 import { useToast } from "@/components/ui/use-toast";
+import { useTeamConfig } from "@/lib/teamConfig";
 
 const STATUSES = [...ORDER_STATUSES];
 const PRIORITIES = ["niski", "średni", "wysoki"];
-const EMPLOYEES = ["Kinga", "Kinga Noszczyk", "Klaudia", "Gabryś", "Łukasz", "Darek", "Robert", "Artur"];
-
 export default function OrderFormDialog({ open, onOpenChange, order, clients, onSaved }) {
   const [form, setForm] = useState({
     title: "", client_id: "", client_name: "", status: "Nowe", priority: "średni",
-    deadline: "", description: "", assignee: "",
+    deadline: "", description: "", assignee: "", graphic: "",
     print_type: "", channel: "", meters: null, settlement: "",
     files: []
   });
@@ -37,6 +36,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
   );
   const storageProviderLabel = getStorageProviderLabel();
   const { toast } = useToast();
+  const { config: teamConfig } = useTeamConfig();
 
   useEffect(() => {
     if (order) {
@@ -52,6 +52,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
         settlement: order.settlement || "",
         deadline: order.deadline || "",
         description: order.description || "",
+        graphic: order.graphic || "",
         assignee: order.assignee || "",
         files: order.files || []
       });
@@ -69,6 +70,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
         settlement: "",
         deadline: "",
         description: "",
+        graphic: "",
         assignee: "",
         files: []
       });
@@ -168,6 +170,7 @@ const data = {
   priority: form.priority || "średni",
   deadline: form.deadline || null,
   assignee: form.assignee || "",
+  graphic: form.graphic || "",
   printType: form.print_type || "",
   channel: form.channel || "",
   meters: form.meters || null,
@@ -328,6 +331,29 @@ const data = {
                 className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1" />
             </div>
             <div>
+              <Label className="text-zinc-400 text-xs">Grafik</Label>
+              <Select
+                value={String(form.graphic || "__none__")}
+                onValueChange={v => setForm({ ...form, graphic: v === "__none__" ? "" : v })}
+              >
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1">
+                  <SelectValue placeholder="Wybierz grafika" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="__none__" className="text-zinc-100 focus:bg-zinc-700">
+                    Brak
+                  </SelectItem>
+                  {teamConfig.designers.map(name => (
+                    <SelectItem key={name} value={name} className="text-zinc-100 focus:bg-zinc-700">
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <div>
               <Label className="text-zinc-400 text-xs">Osoba odpowiedzialna</Label>
               <Select
                 value={String(form.assignee || "")}
@@ -337,7 +363,7 @@ const data = {
                   <SelectValue placeholder="Wybierz pracownika" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {EMPLOYEES.map(name => (
+                  {teamConfig.employees.map(name => (
                     <SelectItem key={name} value={name} className="text-zinc-100 focus:bg-zinc-700">
                       {name}
                     </SelectItem>

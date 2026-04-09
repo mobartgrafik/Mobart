@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { PRINT_TYPE_COLORS, usePrintTypeConfig } from "@/lib/printTypeConfig";
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
+import { useTeamConfig } from "@/lib/teamConfig";
 
 const createTechnologyDraft = () => ({
   key: `tech_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -93,15 +94,21 @@ const formatColorLabel = (color) => color.charAt(0).toUpperCase() + color.slice(
 
 export default function ServiceMode() {
   const { config, setConfig, resetConfig, isLoading, storageMode } = usePrintTypeConfig();
+  const { config: teamConfig, setConfig: setTeamConfig, isLoading: isLoadingTeam, storageMode: teamStorageMode } = useTeamConfig();
   const { role } = useAuth();
   const { toast } = useToast();
   const [draft, setDraft] = useState(config);
+  const [teamDraft, setTeamDraft] = useState(teamConfig);
   const [saving, setSaving] = useState(false);
   const [openTechnologyKey, setOpenTechnologyKey] = useState(null);
 
   useEffect(() => {
     setDraft(config);
   }, [config]);
+
+  useEffect(() => {
+    setTeamDraft(teamConfig);
+  }, [teamConfig]);
 
   useEffect(() => {
     if (!draft.length) {
@@ -190,16 +197,17 @@ export default function ServiceMode() {
 
   const handleSave = () => {
     setSaving(true);
-    setConfig(draft)
-      .then((saved) => {
-        setDraft(saved);
+    Promise.all([setConfig(draft), setTeamConfig(teamDraft)])
+      .then(([savedConfig, savedTeam]) => {
+        setDraft(savedConfig);
+        setTeamDraft(savedTeam);
         toast({
           variant: "success",
           title: "Tryb serwisowy zapisany",
           description:
-            storageMode === "supabase"
-              ? "Nowa konfiguracja kategorii i materiałów jest już aktywna dla wszystkich."
-              : "Konfiguracja została zapisana. Gdy tabela w Supabase będzie gotowa, zapis przełączy się na wspólny.",
+            storageMode === "supabase" && teamStorageMode === "supabase"
+              ? "Kategorie, pracownicy i graficy są już aktywni dla wszystkich."
+              : "Zmiany zapisane. Gdy wszystkie klucze będą gotowe w Supabase, zapis będzie wspólny dla wszystkich.",
         });
       })
       .finally(() => setSaving(false));
@@ -230,7 +238,7 @@ export default function ServiceMode() {
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingTeam) {
     return (
       <div className="max-w-3xl mx-auto rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8 text-center">
         <Loader2 className="w-8 h-8 mx-auto animate-spin text-blue-400" />
@@ -255,6 +263,9 @@ export default function ServiceMode() {
             </p>
             <div className="mt-4 inline-flex rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400">
               Tryb zapisu: {storageMode === "supabase" ? "Supabase wspólny dla wszystkich" : "lokalny awaryjny"}
+            </div>
+            <div className="mt-2 inline-flex rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400">
+              Zespół: {teamStorageMode === "supabase" ? "Supabase wspólny dla wszystkich" : "lokalny awaryjny"}
             </div>
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px] xl:items-stretch">
@@ -296,6 +307,106 @@ export default function ServiceMode() {
           <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">Materiały</div>
           <div className="mt-3 text-4xl font-semibold text-zinc-100">{totalItems}</div>
         </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Zespół</p>
+              <h2 className="mt-2 text-2xl font-semibold text-zinc-100">Pracownicy</h2>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setTeamDraft((prev) => ({ ...prev, employees: [...prev.employees, "Nowy pracownik"] }))}
+              className="h-10 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+            >
+              <Plus className="w-4 h-4" />
+              Dodaj pracownika
+            </Button>
+          </div>
+          <div className="mt-5 grid gap-3">
+            {teamDraft.employees.map((employee, index) => (
+              <div key={`${employee}-${index}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2">
+                <Input
+                  value={employee}
+                  onChange={(e) =>
+                    setTeamDraft((prev) => ({
+                      ...prev,
+                      employees: prev.employees.map((item, itemIndex) => (itemIndex === index ? e.target.value : item)),
+                    }))
+                  }
+                  className="border-zinc-700 bg-zinc-800 text-zinc-100"
+                  placeholder="np. Gabriel"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setTeamDraft((prev) => ({
+                      ...prev,
+                      employees: prev.employees.filter((_, itemIndex) => itemIndex !== index),
+                    }))
+                  }
+                  className="h-10 w-10 shrink-0 border-zinc-700 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-red-300"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Zespół</p>
+              <h2 className="mt-2 text-2xl font-semibold text-zinc-100">Graficy</h2>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setTeamDraft((prev) => ({ ...prev, designers: [...prev.designers, "Nowy grafik"] }))}
+              className="h-10 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+            >
+              <Plus className="w-4 h-4" />
+              Dodaj grafika
+            </Button>
+          </div>
+          <div className="mt-5 grid gap-3">
+            {teamDraft.designers.map((designer, index) => (
+              <div key={`${designer}-${index}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2">
+                <Input
+                  value={designer}
+                  onChange={(e) =>
+                    setTeamDraft((prev) => ({
+                      ...prev,
+                      designers: prev.designers.map((item, itemIndex) => (itemIndex === index ? e.target.value : item)),
+                    }))
+                  }
+                  className="border-zinc-700 bg-zinc-800 text-zinc-100"
+                  placeholder="np. Klaudia"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() =>
+                    setTeamDraft((prev) => ({
+                      ...prev,
+                      designers: prev.designers.filter((_, itemIndex) => itemIndex !== index),
+                    }))
+                  }
+                  className="h-10 w-10 shrink-0 border-zinc-700 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-red-300"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">

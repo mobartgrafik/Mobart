@@ -14,13 +14,12 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFileDownloadUrl, getStoredFileSequenceLabel, uploadOrderFiles } from "@/lib/fileStorage";
+import { useTeamConfig } from "@/lib/teamConfig";
 
 const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
 const CHANNELS = ["Mobart", "Viper", "Zlecenie ze sklepu"];
 const SETTLEMENTS = ["nierozliczone", "rozliczone", "częściowo rozliczone"];
-const EMPLOYEES = ["Kinga", "Kinga Noszczyk", "Klaudia", "Gabryś", "Łukasz", "Darek", "Robert", "Artur"];
-
 const SETTLEMENT_COLORS = {
   "nierozliczone": "text-red-400",
   "rozliczone": "text-green-400",
@@ -46,6 +45,7 @@ export default function OrderForm() {
   const queryClient = useQueryClient();
   const { authorLabel, avatarUrl } = useAuth();
   const { toast } = useToast();
+  const { config: teamConfig } = useTeamConfig();
   const [addClientToDatabase, setAddClientToDatabase] = useState(false);
   const storageProviderLabel = getStorageProviderLabel();
 
@@ -625,8 +625,21 @@ try {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Grafik</Label>
-              <Input value={form.graphic} onChange={e => set("graphic", e.target.value)}
-                className="bg-zinc-800 border-zinc-700 text-zinc-100" placeholder="np. Klaudia" />
+              <Select value={form.graphic || "__none__"} onValueChange={v => set("graphic", v === "__none__" ? "" : v)}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700 text-zinc-100">
+                  <SelectValue placeholder="Wybierz grafika" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-800 border-zinc-700">
+                  <SelectItem value="__none__" className="text-zinc-100 focus:bg-zinc-700">
+                    Brak
+                  </SelectItem>
+                  {teamConfig.designers.map(name => (
+                    <SelectItem key={name} value={name} className="text-zinc-100 focus:bg-zinc-700">
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label className="text-zinc-400 text-xs mb-1.5 block">Pracownik</Label>
@@ -638,7 +651,7 @@ try {
                   <SelectValue placeholder="Wybierz pracownika" />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-800 border-zinc-700">
-                  {EMPLOYEES.map(name => (
+                  {teamConfig.employees.map(name => (
                     <SelectItem key={name} value={name} className="text-zinc-100 focus:bg-zinc-700">
                       {name}
                     </SelectItem>
