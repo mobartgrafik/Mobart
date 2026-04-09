@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Save, RotateCcw, Trash2, Settings2, Loader2, ShieldAlert } from "lucide-react";
+import { Plus, Save, RotateCcw, Trash2, Settings2, Loader2, ShieldAlert, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { PRINT_TYPE_COLORS, usePrintTypeConfig } from "@/lib/printTypeConfig";
 import { useAuth } from "@/lib/AuthContext";
+import { cn } from "@/lib/utils";
 
 const createTechnologyDraft = () => ({
-  key: "",
+  key: `tech_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
   label: "",
   color: "blue",
   groups: [
@@ -96,10 +97,22 @@ export default function ServiceMode() {
   const { toast } = useToast();
   const [draft, setDraft] = useState(config);
   const [saving, setSaving] = useState(false);
+  const [openTechnologyKey, setOpenTechnologyKey] = useState(null);
 
   useEffect(() => {
     setDraft(config);
   }, [config]);
+
+  useEffect(() => {
+    if (!draft.length) {
+      setOpenTechnologyKey(null);
+      return;
+    }
+
+    if (!openTechnologyKey || !draft.some((technology) => technology.key === openTechnologyKey)) {
+      setOpenTechnologyKey(draft[0].key);
+    }
+  }, [draft, openTechnologyKey]);
 
   const totalItems = useMemo(
     () =>
@@ -120,7 +133,12 @@ export default function ServiceMode() {
   };
 
   const addTechnology = () => {
-    setDraft((prev) => [...prev, createTechnologyDraft()]);
+    setDraft((prev) => {
+      const next = [...prev, createTechnologyDraft()];
+      const nextIndex = next.length - 1;
+      setOpenTechnologyKey(next[nextIndex].key || null);
+      return next;
+    });
   };
 
   const removeTechnology = (techIndex) => {
@@ -284,182 +302,221 @@ export default function ServiceMode() {
       <div className="space-y-6">
         {draft.map((technology, techIndex) => {
           const accent = getColorAccent(technology.color);
+          const isOpen = openTechnologyKey === technology.key;
 
           return (
             <section
               key={`${technology.key || "technology"}-${techIndex}`}
               className={`overflow-hidden rounded-3xl border shadow-[0_0_0_1px_rgba(24,24,27,0.3)] ${accent.section}`}
             >
-              <div className={`border-b border-zinc-800 px-6 py-5 ${accent.header}`}>
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Technologia</p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <span className={`h-3 w-3 rounded-full ${accent.dot}`} />
-                    <h2 className="text-2xl font-semibold text-zinc-100">{technology.label || `Technologia ${techIndex + 1}`}</h2>
+              <button
+                type="button"
+                onClick={() => setOpenTechnologyKey(isOpen ? null : technology.key)}
+                className={cn(
+                  "w-full border-b border-zinc-800 px-6 py-5 text-left transition-colors",
+                  accent.header,
+                  isOpen ? "bg-opacity-100" : "hover:bg-zinc-900/70"
+                )}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Technologia</p>
+                    <div className="mt-2 flex items-center gap-3">
+                      <span className={`h-3 w-3 rounded-full ${accent.dot}`} />
+                      <h2 className="truncate text-2xl font-semibold text-zinc-100">
+                        {technology.label || `Technologia ${techIndex + 1}`}
+                      </h2>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+                      <span className={`rounded-full border px-3 py-1 ${accent.pill}`}>
+                        {technology.groups.length} grup
+                      </span>
+                      <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-400">
+                        {technology.groups.reduce((count, group) => count + group.items.length, 0)} materiałów
+                      </span>
+                      <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-400">
+                        Kolor: {formatColorLabel(technology.color)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className={`rounded-full border px-3 py-1 text-xs ${accent.pill}`}>
-                  {technology.groups.length} grup
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-end">
-                <div className="grid flex-1 gap-4 lg:grid-cols-3">
-                  <div>
-                    <Label className="text-xs text-zinc-400">Nazwa technologii</Label>
-                    <Input
-                      value={technology.label}
-                      onChange={(e) =>
-                        updateTechnology(techIndex, (current) => ({
-                          ...current,
-                          label: e.target.value,
-                        }))
-                      }
-                      className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
-                      placeholder="np. Mild Solvent"
+                  <div className="flex items-center gap-3">
+                    <div className="hidden rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-xs text-zinc-400 lg:block">
+                      {isOpen ? "Ukryj edycję" : "Rozwiń edycję"}
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "h-5 w-5 shrink-0 text-zinc-400 transition-transform duration-200",
+                        isOpen && "rotate-180"
+                      )}
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs text-zinc-400">Klucz techniczny</Label>
-                    <Input
-                      value={technology.key}
-                      onChange={(e) =>
-                        updateTechnology(techIndex, (current) => ({
-                          ...current,
-                          key: e.target.value,
-                        }))
-                      }
-                      className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
-                      placeholder="np. mild_solvent"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-zinc-400">Kolor przycisku</Label>
-                    <Select
-                      value={technology.color}
-                      onValueChange={(value) =>
-                        updateTechnology(techIndex, (current) => ({
-                          ...current,
-                          color: value,
-                        }))
-                      }
-                    >
-                      <SelectTrigger className={`mt-1 ${accent.trigger}`}>
-                        <div className="flex items-center gap-2">
-                          <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} />
-                          <SelectValue>{formatColorLabel(technology.color)}</SelectValue>
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-800 border-zinc-700">
-                        {PRINT_TYPE_COLORS.map((color) => (
-                          <SelectItem key={color} value={color} className="text-zinc-100 focus:bg-zinc-700">
-                            <div className="flex items-center gap-2">
-                              <span className={`h-2.5 w-2.5 rounded-full ${getColorAccent(color).dot}`} />
-                              <span className={getColorAccent(color).optionText}>
-                                {formatColorLabel(color)}
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2 2xl:justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => addGroup(techIndex)}
-                    className="h-10 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Dodaj grupę
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => removeTechnology(techIndex)}
-                    className="h-10 border-red-900/70 bg-zinc-950 text-red-300 hover:bg-red-950/40 hover:text-red-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Usuń technologię
-                  </Button>
-                </div>
-              </div>
-            </div>
+              </button>
 
-              <div className="space-y-5 p-6">
-                {technology.groups.map((group, groupIndex) => (
-                  <div key={`${group.group}-${groupIndex}`} className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5">
-                    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-                      <div className="flex-1">
-                        <p className="mb-1 text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Grupa {groupIndex + 1}</p>
-                        <Label className="text-sm font-medium text-zinc-300">Nazwa grupy</Label>
-                        <Input
-                          value={group.group}
-                          onChange={(e) =>
-                            updateGroup(techIndex, groupIndex, (current) => ({
-                              ...current,
-                              group: e.target.value,
-                            }))
-                          }
-                          className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
-                          placeholder="np. Folie"
-                        />
+              {isOpen && (
+                <div className="space-y-5 p-6">
+                  <div className="rounded-2xl border border-zinc-800 bg-zinc-950/75 p-5">
+                    <div className="mb-5 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Ustawienia technologii</p>
+                        <h3 className="mt-2 text-lg font-semibold text-zinc-100">Edytujesz: {technology.label || `Technologia ${techIndex + 1}`}</h3>
                       </div>
-                      <div className="flex flex-wrap gap-2 xl:justify-end">
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => addItem(techIndex, groupIndex)}
+                          onClick={() => addGroup(techIndex)}
                           className="h-10 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
                         >
                           <Plus className="w-4 h-4" />
-                          Dodaj materiał
+                          Dodaj grupę
                         </Button>
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => removeGroup(techIndex, groupIndex)}
+                          onClick={() => removeTechnology(techIndex)}
                           className="h-10 border-red-900/70 bg-zinc-950 text-red-300 hover:bg-red-950/40 hover:text-red-200"
                         >
                           <Trash2 className="w-4 h-4" />
-                          Usuń grupę
+                          Usuń technologię
                         </Button>
                       </div>
                     </div>
 
-                    <div className="mt-5 border-t border-zinc-800/80 pt-5">
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-zinc-300">Materiały w tej grupie</p>
-                        <p className="text-xs text-zinc-500">{group.items.length} pozycji</p>
+                    <div className="grid gap-4 lg:grid-cols-3">
+                      <div>
+                        <Label className="text-xs text-zinc-400">Nazwa technologii</Label>
+                        <Input
+                          value={technology.label}
+                          onChange={(e) =>
+                            updateTechnology(techIndex, (current) => ({
+                              ...current,
+                              label: e.target.value,
+                            }))
+                          }
+                          className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
+                          placeholder="np. Mild Solvent"
+                        />
                       </div>
-                      <div className="grid gap-3 xl:grid-cols-2">
-                        {group.items.map((item, itemIndex) => (
-                          <div key={`${item}-${itemIndex}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-2">
-                            <Input
-                              value={item}
-                              onChange={(e) => updateItem(techIndex, groupIndex, itemIndex, e.target.value)}
-                              className="border-zinc-700 bg-zinc-800 text-zinc-100"
-                              placeholder="np. Flaga"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => removeItem(techIndex, groupIndex, itemIndex)}
-                              className="h-10 w-10 shrink-0 border-zinc-700 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-red-300"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
+                      <div>
+                        <Label className="text-xs text-zinc-400">Klucz techniczny</Label>
+                        <Input
+                          value={technology.key}
+                          onChange={(e) =>
+                            updateTechnology(techIndex, (current) => ({
+                              ...current,
+                              key: e.target.value,
+                            }))
+                          }
+                          className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
+                          placeholder="np. mild_solvent"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs text-zinc-400">Kolor przycisku</Label>
+                        <Select
+                          value={technology.color}
+                          onValueChange={(value) =>
+                            updateTechnology(techIndex, (current) => ({
+                              ...current,
+                              color: value,
+                            }))
+                          }
+                        >
+                          <SelectTrigger className={`mt-1 ${accent.trigger}`}>
+                            <div className="flex items-center gap-2">
+                              <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} />
+                              <SelectValue>{formatColorLabel(technology.color)}</SelectValue>
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent className="bg-zinc-800 border-zinc-700">
+                            {PRINT_TYPE_COLORS.map((color) => (
+                              <SelectItem key={color} value={color} className="text-zinc-100 focus:bg-zinc-700">
+                                <div className="flex items-center gap-2">
+                                  <span className={`h-2.5 w-2.5 rounded-full ${getColorAccent(color).dot}`} />
+                                  <span className={getColorAccent(color).optionText}>
+                                    {formatColorLabel(color)}
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  {technology.groups.map((group, groupIndex) => (
+                    <div key={`${group.group}-${groupIndex}`} className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5">
+                      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                        <div className="flex-1">
+                          <p className="mb-1 text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Grupa {groupIndex + 1}</p>
+                          <Label className="text-sm font-medium text-zinc-300">Nazwa grupy</Label>
+                          <Input
+                            value={group.group}
+                            onChange={(e) =>
+                              updateGroup(techIndex, groupIndex, (current) => ({
+                                ...current,
+                                group: e.target.value,
+                              }))
+                            }
+                            className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
+                            placeholder="np. Folie"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2 xl:justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => addItem(techIndex, groupIndex)}
+                            className="h-10 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Dodaj materiał
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => removeGroup(techIndex, groupIndex)}
+                            className="h-10 border-red-900/70 bg-zinc-950 text-red-300 hover:bg-red-950/40 hover:text-red-200"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Usuń grupę
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 border-t border-zinc-800/80 pt-5">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <p className="text-sm font-medium text-zinc-300">Materiały w tej grupie</p>
+                          <p className="text-xs text-zinc-500">{group.items.length} pozycji</p>
+                        </div>
+                        <div className="grid gap-3 xl:grid-cols-2">
+                          {group.items.map((item, itemIndex) => (
+                            <div key={`${item}-${itemIndex}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-2">
+                              <Input
+                                value={item}
+                                onChange={(e) => updateItem(techIndex, groupIndex, itemIndex, e.target.value)}
+                                className="border-zinc-700 bg-zinc-800 text-zinc-100"
+                                placeholder="np. Flaga"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                onClick={() => removeItem(techIndex, groupIndex, itemIndex)}
+                                className="h-10 w-10 shrink-0 border-zinc-700 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-red-300"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
           );
         })}
