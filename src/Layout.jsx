@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTheme } from "next-themes";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2, Archive } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2, Archive, Sun, Moon } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,9 @@ const NAV_ITEMS = [
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { authorLabel, avatarUrl, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const handler = (e) => {
@@ -32,10 +35,16 @@ export default function Layout({ children, currentPageName }) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDarkMode = !mounted || theme !== "light";
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
       <style>{`
-        :root {
+        .dark {
           --background: 0 0% 4%;
           --foreground: 240 5% 96%;
           --card: 240 6% 8%;
@@ -57,7 +66,6 @@ export default function Layout({ children, currentPageName }) {
           --ring: 217 91% 60%;
           --radius: 0.5rem;
         }
-        body { background: #09090b; }
         * { scrollbar-width: thin; scrollbar-color: #27272a transparent; }
       `}</style>
 
@@ -124,6 +132,15 @@ export default function Layout({ children, currentPageName }) {
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTheme(isDarkMode ? "light" : "dark")}
+              className="bg-zinc-800/20 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 gap-2"
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDarkMode ? "Jasny" : "Ciemny"}
+            </Button>
             <Link
               to="/profile"
               className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/30 border border-zinc-800/60 text-zinc-300 hover:text-zinc-100 hover:border-zinc-700 transition-colors text-sm"

@@ -86,3 +86,81 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer base {
+  .light {
+    color-scheme: light;
+  }
+
+  .light body {
+    background-color: #f1f5f9;
+  }
+}
+
+@layer components {
+  .light .bg-zinc-950,
+  .light .bg-zinc-950\/80 {
+    background-color: rgba(248, 250, 252, 0.92) !important;
+  }
+
+  .light .bg-zinc-900,
+  .light .bg-zinc-900\/80,
+  .light .bg-zinc-900\/60,
+  .light .bg-zinc-900\/50,
+  .light .bg-zinc-900\/40,
+  .light .bg-zinc-900\/20 {
+    background-color: rgba(255, 255, 255, 0.92) !important;
+  }
+
+  .light .bg-zinc-800,
+  .light .bg-zinc-800\/80,
+  .light .bg-zinc-800\/60,
+  .light .bg-zinc-800\/50,
+  .light .bg-zinc-800\/30,
+  .light .bg-zinc-800\/20 {
+    background-color: rgba(241, 245, 249, 0.98) !important;
+  }
+
+  .light .border-zinc-800,
+  .light .border-zinc-800\/60,
+  .light .border-zinc-800\/50,
+  .light .border-zinc-800\/40,
+  .light .border-zinc-700,
+  .light .border-zinc-700\/50,
+  .light .border-zinc-700\/30 {
+    border-color: rgba(203, 213, 225, 0.95) !important;
+  }
+
+  .light .text-zinc-100,
+  .light .text-zinc-200,
+  .light .text-zinc-300 {
+    color: #0f172a !important;
+  }
+
+  .light .text-zinc-400,
+  .light .text-zinc-500 {
+    color: #475569 !important;
+  }
+
+  .light .text-zinc-600,
+  .light .text-zinc-700 {
+    color: #64748b !important;
+  }
+
+  .light .hover\:bg-zinc-800:hover,
+  .light .hover\:bg-zinc-800\/50:hover,
+  .light .hover\:bg-zinc-700:hover,
+  .light .hover\:bg-zinc-750:hover {
+    background-color: rgba(226, 232, 240, 0.98) !important;
+  }
+
+  .light .hover\:text-zinc-100:hover,
+  .light .hover\:text-zinc-300:hover,
+  .light .hover\:text-zinc-400:hover {
+    color: #0f172a !important;
+  }
+
+  .light .placeholder\:text-zinc-600::placeholder {
+    color: #94a3b8 !important;
+  }
+}
