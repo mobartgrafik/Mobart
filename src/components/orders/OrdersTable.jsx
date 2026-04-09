@@ -89,14 +89,12 @@ return "—";
     queryClient.invalidateQueries({ queryKey: ["orders"] });
   };
 
-const downloadFile = async (url, name) => {
+const downloadFile = (url) => {
 try {
-const response = await fetch(url);
-const blob = await response.blob();
-
 const link = document.createElement("a");
-link.href = window.URL.createObjectURL(blob);
-link.download = name;
+link.href = url;
+link.target = "_blank";
+link.rel = "noopener";
 
 document.body.appendChild(link);
 link.click();
@@ -255,8 +253,7 @@ className="text-zinc-300 hover:bg-zinc-800"
 onClick={(e) => {
 e.stopPropagation();
 downloadFile(
-getStoredFileDownloadUrl(order.files[0]),
-order.files[0].name
+getStoredFileDownloadUrl(order.files[0])
 );
 }}
 className="p-1.5 bg-green-600 hover:bg-green-700 text-white rounded-md"

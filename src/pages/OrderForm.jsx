@@ -383,28 +383,25 @@ if (andNew) {
     return <FileText className="w-4 h-4 text-blue-400" />;
   };
 
-const downloadFile = async (url, name) => {
+const downloadFile = (url) => {
 try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-
-    const blobUrl = window.URL.createObjectURL(blob);
-
     const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = name;
-    link.target = "_self";
+    link.href = url;
+    link.target = "_blank";
     link.rel = "noopener";
     link.style.display = "none";
 
     document.body.appendChild(link);
     link.click();
-
     document.body.removeChild(link);
-    window.URL.revokeObjectURL(blobUrl);
 
   } catch (err) {
     console.error("Download error:", err);
+    toast({
+      title: "Nie udało się pobrać pliku",
+      description: err?.message || "Przeglądarka zablokowała pobieranie pliku z Google Drive.",
+      duration: 6000,
+    });
   }
 };
 
@@ -715,7 +712,7 @@ try {
     <Button
       size="sm"
       variant="ghost"
-      onClick={() => downloadFile(getStoredFileDownloadUrl(f), f.name)}
+      onClick={() => downloadFile(getStoredFileDownloadUrl(f))}
       className="text-blue-400 hover:text-blue-300"
     >
       Pobierz
