@@ -50,6 +50,7 @@
 import BannerCreator from './pages/BannerCreator';
 import ClientDetail from './pages/ClientDetail';
 import Clients from './pages/Clients';
+import CompletedOrders from './pages/CompletedOrders';
 import Dashboard from './pages/Dashboard';
 import Handoff from './pages/Handoff';
 import History from './pages/History';
@@ -62,6 +63,7 @@ export const PAGES = {
     "BannerCreator": BannerCreator,
     "ClientDetail": ClientDetail,
     "Clients": Clients,
+    "CompletedOrders": CompletedOrders,
     "Dashboard": Dashboard,
     "Handoff": Handoff,
     "History": History,

@@ -21,7 +21,7 @@ DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, User, FileText, Download } from "lucide-react";
+import { Pencil, Trash2, User, FileText, Download, RotateCcw } from "lucide-react";
 
 import StatusBadge from "./StatusBadge";
 import PriorityBadge from "./PriorityBadge";
@@ -56,7 +56,9 @@ orders,
 onPreview,
 onEdit,
 onDelete,
-visibleCols = defaultCols
+visibleCols = defaultCols,
+onRestore,
+restoreLabel = "Przywróć",
 }) {
 
 const queryClient = useQueryClient();
@@ -272,6 +274,7 @@ className="flex gap-1"
 onClick={e => e.stopPropagation()}
 >
 
+{onEdit ? (
 <Button
 size="icon"
 variant="ghost"
@@ -279,7 +282,9 @@ onClick={() => onEdit(order)}
 >
 <Pencil className="w-3.5 h-3.5" />
 </Button>
+) : null}
 
+{onDelete ? (
 <Button
 size="icon"
 variant="ghost"
@@ -287,6 +292,18 @@ onClick={() => onDelete(order)}
 >
 <Trash2 className="w-3.5 h-3.5" />
 </Button>
+) : null}
+
+{onRestore ? (
+<Button
+size="icon"
+variant="ghost"
+onClick={() => onRestore(order)}
+title={restoreLabel}
+>
+<RotateCcw className="w-3.5 h-3.5" />
+</Button>
+) : null}
 
 </div>
 </TableCell>

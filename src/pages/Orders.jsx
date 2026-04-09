@@ -18,7 +18,7 @@ import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues"
 import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
 import { useToast } from "@/components/ui/use-toast";
 
-const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
+const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane"];
 const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
 
 export default function Orders() {
@@ -111,7 +111,9 @@ const deleteMutation = useMutation({
   },
 });
 
-  const filtered = orders.filter(o => {
+  const activeOrders = orders.filter((order) => order.status !== "Zakończone");
+
+  const filtered = activeOrders.filter(o => {
     const matchSearch = !search || o.title?.toLowerCase().includes(search.toLowerCase()) || o.client_name?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "Wszystkie" || o.status === statusFilter;
     const matchPriority = priorityFilter === "Wszystkie" || o.priority === priorityFilter;

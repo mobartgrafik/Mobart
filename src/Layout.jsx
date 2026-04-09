@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2 } from "lucide-react";
+import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2, Archive } from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 const NAV_ITEMS = [
   { name: "Dashboard", label: "Pulpit", icon: LayoutDashboard },
   { name: "Orders", label: "Zlecenia", icon: FileText },
+  { name: "CompletedOrders", label: "Zakończone", icon: Archive },
   { name: "Clients", label: "Klienci", icon: Users },
   { name: "Handoff", label: "Do przekazania", icon: Printer },
   { name: "History", label: "Historia zmian", icon: History },
