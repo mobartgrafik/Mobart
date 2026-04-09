@@ -108,9 +108,8 @@ export default function ServiceMode() {
       setOpenTechnologyKey(null);
       return;
     }
-
-    if (!openTechnologyKey || !draft.some((technology) => technology.key === openTechnologyKey)) {
-      setOpenTechnologyKey(draft[0].key);
+    if (openTechnologyKey && !draft.some((technology) => technology.key === openTechnologyKey)) {
+      setOpenTechnologyKey(null);
     }
   }, [draft, openTechnologyKey]);
 
@@ -299,7 +298,7 @@ export default function ServiceMode() {
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid gap-6 xl:grid-cols-3">
         {draft.map((technology, techIndex) => {
           const accent = getColorAccent(technology.color);
           const isOpen = openTechnologyKey === technology.key;
@@ -307,7 +306,11 @@ export default function ServiceMode() {
           return (
             <section
               key={`${technology.key || "technology"}-${techIndex}`}
-              className={`overflow-hidden rounded-3xl border shadow-[0_0_0_1px_rgba(24,24,27,0.3)] ${accent.section}`}
+              className={cn(
+                "overflow-hidden rounded-3xl border shadow-[0_0_0_1px_rgba(24,24,27,0.3)]",
+                accent.section,
+                isOpen && "xl:col-span-3"
+              )}
             >
               <button
                 type="button"
