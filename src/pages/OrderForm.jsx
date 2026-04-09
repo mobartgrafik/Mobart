@@ -13,7 +13,7 @@ import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
-import { getStorageProviderLabel, getStoredFileDownloadUrl, uploadOrderFiles } from "@/lib/fileStorage";
+import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFileDownloadUrl, uploadOrderFiles } from "@/lib/fileStorage";
 
 const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
@@ -56,6 +56,7 @@ export default function OrderForm() {
 
   const [form, setForm] = useState(freshEmptyForm);
   const [originalForm, setOriginalForm] = useState(null);
+  const [removedFiles, setRemovedFiles] = useState([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
@@ -112,6 +113,7 @@ const { data, error } = await supabase
       };
       setForm(loaded);
       setOriginalForm(loaded);
+      setRemovedFiles([]);
     }
   }, [existingOrder, clients]);
 
@@ -226,7 +228,28 @@ const handleFileUpload = async (e) => {
   }
 };
 
-  const removeFile = (idx) => setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
+  const removeFile = async (idx) => {
+    const fileToRemove = form.files[idx];
+    if (!fileToRemove) return;
+
+    if (!orderId) {
+      try {
+        await deleteStoredFile(fileToRemove);
+      } catch (err) {
+        console.error("Delete file error:", err);
+        toast({
+          title: "Nie udało się usunąć pliku",
+          description: err?.message || "Google Drive odrzucił usunięcie pliku.",
+          duration: 7000,
+        });
+        return;
+      }
+    } else {
+      setRemovedFiles((prev) => [...prev, fileToRemove]);
+    }
+
+    setForm((prev) => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
+  };
 
   const TRACKED_FIELDS = ["status", "priority", "assignee", "graphic", "deadline", "print_date", "settlement", "channel", "meters", "price", "print_type", "title"];
   const FIELD_LABELS_SAVE = { status: "Status", priority: "Priorytet", assignee: "Pracownik", graphic: "Grafik", deadline: "Termin", print_date: "Data wydruku", settlement: "Rozliczenie", channel: "Kanał", meters: "Metry (m²)", price: "Cena", print_type: "Produkt", title: "Nazwa zlecenia" };
@@ -288,6 +311,20 @@ if (orderId) {
   if (error) {
     console.error("SUPABASE ERROR:", error);
     alert(error.message);
+  }
+
+  if (!error && removedFiles.length > 0) {
+    try {
+      await deleteStoredFiles(removedFiles);
+      setRemovedFiles([]);
+    } catch (deleteError) {
+      console.error("Delete removed files error:", deleteError);
+      toast({
+        title: "Zlecenie zapisane, ale plik nie został usunięty z Dysku Google",
+        description: deleteError?.message || "Sprawdź pliki na Google Drive.",
+        duration: 7000,
+      });
+    }
   }
 
   // historia zmian

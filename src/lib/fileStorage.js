@@ -1,4 +1,4 @@
-import { isGoogleDriveConfigured, uploadFileToGoogleDrive } from "@/lib/googleDriveStorage";
+import { deleteFileFromGoogleDrive, isGoogleDriveConfigured, uploadFileToGoogleDrive } from "@/lib/googleDriveStorage";
 
 const STORAGE_PROVIDER_GOOGLE_DRIVE = "google-drive";
 
@@ -12,6 +12,10 @@ export function getStoredFilePreviewUrl(file) {
 
 export function getStoredFileDownloadUrl(file) {
   return file?.downloadUrl || file?.url || "";
+}
+
+export function isGoogleDriveStoredFile(file) {
+  return file?.provider === STORAGE_PROVIDER_GOOGLE_DRIVE || Boolean(file?.id);
 }
 
 function ensureGoogleDriveConfigured() {
@@ -49,4 +53,24 @@ export async function uploadAvatarFile(file, userId) {
     folderId,
     fileName: `${userId || "avatar"}-${fileName}`,
   });
+}
+
+export async function deleteStoredFile(file) {
+  ensureGoogleDriveConfigured();
+
+  if (!isGoogleDriveStoredFile(file)) {
+    return;
+  }
+
+  if (!file?.id) {
+    throw new Error("Tego pliku nie da się automatycznie usunąć z Google Drive, bo brakuje jego identyfikatora.");
+  }
+
+  await deleteFileFromGoogleDrive(file.id);
+}
+
+export async function deleteStoredFiles(files) {
+  for (const file of files || []) {
+    await deleteStoredFile(file);
+  }
 }

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload, X, FileText, Image } from "lucide-react";
 import PrintTypeSelect from "./PrintTypeSelect";
 import { ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
-import { getStorageProviderLabel, getStoredFilePreviewUrl, uploadOrderFiles } from "@/lib/fileStorage";
+import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFilePreviewUrl, uploadOrderFiles } from "@/lib/fileStorage";
 import { useToast } from "@/components/ui/use-toast";
 
 const STATUSES = [...ORDER_STATUSES];
@@ -25,6 +25,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [removedFiles, setRemovedFiles] = useState([]);
   const [addClientToDatabase, setAddClientToDatabase] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
   const normalizedClientInput = String(form.client_name || "").trim().toLowerCase();
@@ -54,6 +55,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
         assignee: order.assignee || "",
         files: order.files || []
       });
+      setRemovedFiles([]);
     } else {
       setForm({
         title: "",
@@ -70,6 +72,7 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
         assignee: "",
         files: []
       });
+      setRemovedFiles([]);
     }
   }, [order, open]);
 
@@ -107,7 +110,26 @@ export default function OrderFormDialog({ open, onOpenChange, order, clients, on
     }
   };
 
-  const removeFile = (idx) => {
+  const removeFile = async (idx) => {
+    const fileToRemove = form.files[idx];
+    if (!fileToRemove) return;
+
+    if (!order?.id) {
+      try {
+        await deleteStoredFile(fileToRemove);
+      } catch (err) {
+        console.error("Delete file error:", err);
+        toast({
+          title: "Nie udało się usunąć pliku",
+          description: err?.message || "Google Drive odrzucił usunięcie pliku.",
+          duration: 7000,
+        });
+        return;
+      }
+    } else {
+      setRemovedFiles((prev) => [...prev, fileToRemove]);
+    }
+
     setForm(prev => ({ ...prev, files: prev.files.filter((_, i) => i !== idx) }));
   };
 
@@ -161,6 +183,11 @@ const data = {
         .eq("id", order.id);
 
       if (error) throw error;
+
+      if (removedFiles.length > 0) {
+        await deleteStoredFiles(removedFiles);
+        setRemovedFiles([]);
+      }
 
     } else {
       const { error } = await supabase

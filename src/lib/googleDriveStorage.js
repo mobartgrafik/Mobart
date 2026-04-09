@@ -48,6 +48,10 @@ async function getGoogleDriveAccessToken() {
     throw new Error("Brakuje `VITE_GOOGLE_DRIVE_CLIENT_ID` do uploadu plików na Google Drive.");
   }
 
+  if (googleDriveAccessToken) {
+    return googleDriveAccessToken;
+  }
+
   await loadGoogleIdentityScript();
 
   return new Promise((resolve, reject) => {
@@ -66,7 +70,7 @@ async function getGoogleDriveAccessToken() {
       error_callback: () => reject(new Error("Autoryzacja Google Drive została przerwana.")),
     });
 
-    tokenClient.requestAccessToken({ prompt: googleDriveAccessToken ? "" : "consent" });
+    tokenClient.requestAccessToken({ prompt: "consent" });
   });
 }
 
@@ -157,4 +161,23 @@ export async function uploadFileToGoogleDrive(file, { folderId, fileName = file.
     downloadUrl: uploadedFile.webContentLink || getDriveDownloadUrl(uploadedFile.id),
     permissionError: permissionErrorMessage,
   };
+}
+
+export async function deleteFileFromGoogleDrive(fileId) {
+  if (!fileId) {
+    throw new Error("Brakuje identyfikatora pliku Google Drive do usunięcia.");
+  }
+
+  const accessToken = await getGoogleDriveAccessToken();
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok && response.status !== 404) {
+    const errorText = await response.text();
+    throw new Error(`Nie udało się usunąć pliku z Google Drive. ${errorText}`);
+  }
 }
