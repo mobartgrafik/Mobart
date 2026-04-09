@@ -20,6 +20,76 @@ const createTechnologyDraft = () => ({
   ],
 });
 
+const SERVICE_COLOR_ACCENTS = {
+  blue: {
+    section: "border-blue-900/40 bg-gradient-to-br from-blue-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-blue-500/8",
+    pill: "border-blue-500/30 bg-blue-500/10 text-blue-200",
+    trigger: "border-blue-500/35 bg-blue-500/10 text-blue-100",
+    dot: "bg-blue-400",
+    optionText: "text-blue-300",
+  },
+  orange: {
+    section: "border-orange-900/40 bg-gradient-to-br from-orange-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-orange-500/8",
+    pill: "border-orange-500/30 bg-orange-500/10 text-orange-200",
+    trigger: "border-orange-500/35 bg-orange-500/10 text-orange-100",
+    dot: "bg-orange-400",
+    optionText: "text-orange-300",
+  },
+  violet: {
+    section: "border-violet-900/40 bg-gradient-to-br from-violet-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-violet-500/8",
+    pill: "border-violet-500/30 bg-violet-500/10 text-violet-200",
+    trigger: "border-violet-500/35 bg-violet-500/10 text-violet-100",
+    dot: "bg-violet-400",
+    optionText: "text-violet-300",
+  },
+  green: {
+    section: "border-green-900/40 bg-gradient-to-br from-green-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-green-500/8",
+    pill: "border-green-500/30 bg-green-500/10 text-green-200",
+    trigger: "border-green-500/35 bg-green-500/10 text-green-100",
+    dot: "bg-green-400",
+    optionText: "text-green-300",
+  },
+  pink: {
+    section: "border-pink-900/40 bg-gradient-to-br from-pink-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-pink-500/8",
+    pill: "border-pink-500/30 bg-pink-500/10 text-pink-200",
+    trigger: "border-pink-500/35 bg-pink-500/10 text-pink-100",
+    dot: "bg-pink-400",
+    optionText: "text-pink-300",
+  },
+  teal: {
+    section: "border-teal-900/40 bg-gradient-to-br from-teal-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-teal-500/8",
+    pill: "border-teal-500/30 bg-teal-500/10 text-teal-200",
+    trigger: "border-teal-500/35 bg-teal-500/10 text-teal-100",
+    dot: "bg-teal-400",
+    optionText: "text-teal-300",
+  },
+  amber: {
+    section: "border-amber-900/40 bg-gradient-to-br from-amber-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-amber-500/8",
+    pill: "border-amber-500/30 bg-amber-500/10 text-amber-200",
+    trigger: "border-amber-500/35 bg-amber-500/10 text-amber-100",
+    dot: "bg-amber-400",
+    optionText: "text-amber-300",
+  },
+  red: {
+    section: "border-red-900/40 bg-gradient-to-br from-red-500/8 via-zinc-900/60 to-zinc-900/60",
+    header: "bg-red-500/8",
+    pill: "border-red-500/30 bg-red-500/10 text-red-200",
+    trigger: "border-red-500/35 bg-red-500/10 text-red-100",
+    dot: "bg-red-400",
+    optionText: "text-red-300",
+  },
+};
+
+const getColorAccent = (color) => SERVICE_COLOR_ACCENTS[color] || SERVICE_COLOR_ACCENTS.blue;
+const formatColorLabel = (color) => color.charAt(0).toUpperCase() + color.slice(1);
+
 export default function ServiceMode() {
   const { config, setConfig, resetConfig, isLoading, storageMode } = usePrintTypeConfig();
   const { role } = useAuth();
@@ -212,18 +282,24 @@ export default function ServiceMode() {
       </div>
 
       <div className="space-y-6">
-        {draft.map((technology, techIndex) => (
-          <section
-            key={`${technology.key || "technology"}-${techIndex}`}
-            className="overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-900/60 shadow-[0_0_0_1px_rgba(24,24,27,0.3)]"
-          >
-            <div className="border-b border-zinc-800 bg-zinc-900/90 px-6 py-5">
+        {draft.map((technology, techIndex) => {
+          const accent = getColorAccent(technology.color);
+
+          return (
+            <section
+              key={`${technology.key || "technology"}-${techIndex}`}
+              className={`overflow-hidden rounded-3xl border shadow-[0_0_0_1px_rgba(24,24,27,0.3)] ${accent.section}`}
+            >
+              <div className={`border-b border-zinc-800 px-6 py-5 ${accent.header}`}>
               <div className="mb-5 flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Technologia</p>
-                  <h2 className="mt-2 text-2xl font-semibold text-zinc-100">{technology.label || `Technologia ${techIndex + 1}`}</h2>
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className={`h-3 w-3 rounded-full ${accent.dot}`} />
+                    <h2 className="text-2xl font-semibold text-zinc-100">{technology.label || `Technologia ${techIndex + 1}`}</h2>
+                  </div>
                 </div>
-                <div className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-xs text-zinc-400">
+                <div className={`rounded-full border px-3 py-1 text-xs ${accent.pill}`}>
                   {technology.groups.length} grup
                 </div>
               </div>
@@ -269,13 +345,21 @@ export default function ServiceMode() {
                         }))
                       }
                     >
-                      <SelectTrigger className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100">
-                        <SelectValue />
+                      <SelectTrigger className={`mt-1 ${accent.trigger}`}>
+                        <div className="flex items-center gap-2">
+                          <span className={`h-2.5 w-2.5 rounded-full ${accent.dot}`} />
+                          <SelectValue>{formatColorLabel(technology.color)}</SelectValue>
+                        </div>
                       </SelectTrigger>
                       <SelectContent className="bg-zinc-800 border-zinc-700">
                         {PRINT_TYPE_COLORS.map((color) => (
                           <SelectItem key={color} value={color} className="text-zinc-100 focus:bg-zinc-700">
-                            {color}
+                            <div className="flex items-center gap-2">
+                              <span className={`h-2.5 w-2.5 rounded-full ${getColorAccent(color).dot}`} />
+                              <span className={getColorAccent(color).optionText}>
+                                {formatColorLabel(color)}
+                              </span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -305,79 +389,80 @@ export default function ServiceMode() {
               </div>
             </div>
 
-            <div className="space-y-5 p-6">
-              {technology.groups.map((group, groupIndex) => (
-                <div key={`${group.group}-${groupIndex}`} className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5">
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-                    <div className="flex-1">
-                      <p className="mb-1 text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Grupa {groupIndex + 1}</p>
-                      <Label className="text-sm font-medium text-zinc-300">Nazwa grupy</Label>
-                      <Input
-                        value={group.group}
-                        onChange={(e) =>
-                          updateGroup(techIndex, groupIndex, (current) => ({
-                            ...current,
-                            group: e.target.value,
-                          }))
-                        }
-                        className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
-                        placeholder="np. Folie"
-                      />
-                    </div>
-                    <div className="flex flex-wrap gap-2 xl:justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => addItem(techIndex, groupIndex)}
-                        className="h-10 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Dodaj materiał
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => removeGroup(techIndex, groupIndex)}
-                        className="h-10 border-red-900/70 bg-zinc-950 text-red-300 hover:bg-red-950/40 hover:text-red-200"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Usuń grupę
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 border-t border-zinc-800/80 pt-5">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-zinc-300">Materiały w tej grupie</p>
-                      <p className="text-xs text-zinc-500">{group.items.length} pozycji</p>
-                    </div>
-                    <div className="grid gap-3 xl:grid-cols-2">
-                    {group.items.map((item, itemIndex) => (
-                      <div key={`${item}-${itemIndex}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-2">
+              <div className="space-y-5 p-6">
+                {technology.groups.map((group, groupIndex) => (
+                  <div key={`${group.group}-${groupIndex}`} className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                      <div className="flex-1">
+                        <p className="mb-1 text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Grupa {groupIndex + 1}</p>
+                        <Label className="text-sm font-medium text-zinc-300">Nazwa grupy</Label>
                         <Input
-                          value={item}
-                          onChange={(e) => updateItem(techIndex, groupIndex, itemIndex, e.target.value)}
-                          className="border-zinc-700 bg-zinc-800 text-zinc-100"
-                          placeholder="np. Flaga"
+                          value={group.group}
+                          onChange={(e) =>
+                            updateGroup(techIndex, groupIndex, (current) => ({
+                              ...current,
+                              group: e.target.value,
+                            }))
+                          }
+                          className="mt-1 bg-zinc-800 border-zinc-700 text-zinc-100"
+                          placeholder="np. Folie"
                         />
+                      </div>
+                      <div className="flex flex-wrap gap-2 xl:justify-end">
                         <Button
                           type="button"
                           variant="outline"
-                          size="icon"
-                          onClick={() => removeItem(techIndex, groupIndex, itemIndex)}
-                          className="h-10 w-10 shrink-0 border-zinc-700 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-red-300"
+                          onClick={() => addItem(techIndex, groupIndex)}
+                          className="h-10 border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+                        >
+                          <Plus className="w-4 h-4" />
+                          Dodaj materiał
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => removeGroup(techIndex, groupIndex)}
+                          className="h-10 border-red-900/70 bg-zinc-950 text-red-300 hover:bg-red-950/40 hover:text-red-200"
                         >
                           <Trash2 className="w-4 h-4" />
+                          Usuń grupę
                         </Button>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="mt-5 border-t border-zinc-800/80 pt-5">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-zinc-300">Materiały w tej grupie</p>
+                        <p className="text-xs text-zinc-500">{group.items.length} pozycji</p>
+                      </div>
+                      <div className="grid gap-3 xl:grid-cols-2">
+                        {group.items.map((item, itemIndex) => (
+                          <div key={`${item}-${itemIndex}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-2">
+                            <Input
+                              value={item}
+                              onChange={(e) => updateItem(techIndex, groupIndex, itemIndex, e.target.value)}
+                              className="border-zinc-700 bg-zinc-800 text-zinc-100"
+                              placeholder="np. Flaga"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              onClick={() => removeItem(techIndex, groupIndex, itemIndex)}
+                              className="h-10 w-10 shrink-0 border-zinc-700 bg-zinc-950 text-zinc-400 hover:bg-zinc-800 hover:text-red-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))}
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
 
       <Button
