@@ -79,6 +79,44 @@ export default function CompletedOrders() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (order) => {
+      const { error } = await supabase
+        .from("orders")
+        .delete()
+        .eq("id", order.id);
+
+      if (error) throw error;
+
+      await supabase
+        .from("order_comments")
+        .insert([{
+          order_id: order.id,
+          type: "history",
+          content: `Usunięto zakończone zlecenie: ${order.title}`,
+          author: authorLabel,
+          author_avatar_url: avatarUrl || null,
+        }]);
+    },
+    onSuccess: (_, order) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["all-comments"] });
+      toast({
+        variant: "destructive",
+        title: "Usunięto zlecenie",
+        description: order?.title ? `Usunięto „${order.title}”.` : "Usunięto zlecenie.",
+      });
+    },
+    onError: (error) => {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Nie udało się usunąć zlecenia",
+        description: error?.message || "Spróbuj ponownie.",
+      });
+    },
+  });
+
   const completedOrders = orders
     .filter((order) => order.status === "Zakończone")
     .filter((order) => {
@@ -94,6 +132,11 @@ export default function CompletedOrders() {
   const handlePreview = (order) => {
     setPreviewOrder(order);
     setPreviewOpen(true);
+  };
+  const handleDelete = (order) => {
+    if (confirm(`Usunąć zakończone zlecenie "${order.title}"?`)) {
+      deleteMutation.mutate(order);
+    }
   };
 
   return (
@@ -131,7 +174,7 @@ export default function CompletedOrders() {
             orders={completedOrders}
             onPreview={handlePreview}
             onEdit={handleEdit}
-            onDelete={null}
+            onDelete={handleDelete}
             onRestore={(order) => restoreMutation.mutate(order)}
             restoreLabel="Przywróć do aktywnych"
           />
