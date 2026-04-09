@@ -13,7 +13,7 @@ import { createPageUrl } from "@/utils";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
-import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFileDownloadUrl, uploadOrderFiles } from "@/lib/fileStorage";
+import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFileDownloadUrl, getStoredFileSequenceLabel, uploadOrderFiles } from "@/lib/fileStorage";
 
 const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
@@ -743,7 +743,7 @@ try {
     {getFileIcon(f.type)}
 
     <span className="text-zinc-300 truncate flex-1">
-      {f.name}
+      {getStoredFileSequenceLabel(f) || f.name}
     </span>
 
     <Button

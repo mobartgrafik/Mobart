@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Upload, X, FileText, Image } from "lucide-react";
 import PrintTypeSelect from "./PrintTypeSelect";
 import { ORDER_STATUSES, normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
-import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFilePreviewUrl, uploadOrderFiles } from "@/lib/fileStorage";
+import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFilePreviewUrl, getStoredFileSequenceLabel, uploadOrderFiles } from "@/lib/fileStorage";
 import { useToast } from "@/components/ui/use-toast";
 
 const STATUSES = [...ORDER_STATUSES];
@@ -357,7 +357,7 @@ const data = {
               {form.files.map((f, i) => (
                 <div key={i} className="flex items-center gap-2 bg-zinc-800 rounded-lg px-3 py-2 text-sm">
                   {getFileIcon(f.type)}
-                  <a href={getStoredFilePreviewUrl(f)} target="_blank" rel="noopener noreferrer" className="text-zinc-300 hover:text-white truncate flex-1">{f.name}</a>
+                  <a href={getStoredFilePreviewUrl(f)} target="_blank" rel="noopener noreferrer" className="text-zinc-300 hover:text-white truncate flex-1">{getStoredFileSequenceLabel(f) || f.name}</a>
                   <button onClick={() => removeFile(i)} className="text-zinc-500 hover:text-red-400"><X className="w-3.5 h-3.5" /></button>
                 </div>
               ))}

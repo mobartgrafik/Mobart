@@ -101,7 +101,7 @@ async function createPublicPermission(fileId, accessToken) {
   }
 }
 
-export async function uploadFileToGoogleDrive(file, { folderId, fileName = file.name } = {}) {
+export async function uploadFileToGoogleDrive(file, { folderId, fileName = file.name, metadata: customMetadata = {} } = {}) {
   const accessToken = await getGoogleDriveAccessToken();
   const metadata = {
     name: fileName,
@@ -153,13 +153,15 @@ export async function uploadFileToGoogleDrive(file, { folderId, fileName = file.
 
   return {
     id: uploadedFile.id,
-    name: file.name,
+    name: fileName,
+    originalName: customMetadata.originalName || file.name,
     type: file.type || uploadedFile.mimeType || "",
     provider: "google-drive",
     url: uploadedFile.webViewLink || getDrivePreviewUrl(uploadedFile.id),
     viewUrl: uploadedFile.webViewLink || getDrivePreviewUrl(uploadedFile.id),
     downloadUrl: uploadedFile.webContentLink || getDriveDownloadUrl(uploadedFile.id),
     permissionError: permissionErrorMessage,
+    ...customMetadata,
   };
 }
 

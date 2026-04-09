@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { pl } from "date-fns/locale";
 import PriorityBadge from "@/components/orders/PriorityBadge";
 import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
-import { getStoredFilePreviewUrl } from "@/lib/fileStorage";
+import { getStoredFilePreviewUrl, getStoredFileSequenceLabel } from "@/lib/fileStorage";
 
 export default function Handoff() {
   const queryClient = useQueryClient();
@@ -88,7 +88,7 @@ export default function Handoff() {
                     {order.files.map((f, i) => (
                       <a key={i} href={getStoredFilePreviewUrl(f)} target="_blank" rel="noopener noreferrer"
                         className="text-xs bg-zinc-800 text-zinc-400 hover:text-zinc-200 px-2.5 py-1 rounded-md border border-zinc-700/50">
-                        {f.name}
+                        {getStoredFileSequenceLabel(f) || f.name}
                       </a>
                     ))}
                   </div>
