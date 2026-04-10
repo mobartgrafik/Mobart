@@ -1,22 +1,83 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { createPageUrl } from "@/utils";
-import { LayoutDashboard, FileText, Users, Printer, Menu, X, History, Image, Search, LogOut, User2, Archive, Sun, Moon, Settings2 } from "lucide-react";
+import {
+  Archive,
+  FileText,
+  History,
+  Image,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Moon,
+  Printer,
+  Search,
+  Settings2,
+  Sparkles,
+  Sun,
+  User2,
+  Users,
+  X,
+} from "lucide-react";
 import GlobalSearch from "@/components/GlobalSearch";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 
-const NAV_ITEMS = [
-  { name: "Dashboard", label: "Pulpit", icon: LayoutDashboard },
-  { name: "Orders", label: "Zlecenia", icon: FileText },
-  { name: "CompletedOrders", label: "Zakończone", icon: Archive },
-  { name: "Clients", label: "Klienci", icon: Users },
-  { name: "Handoff", label: "Do przekazania", icon: Printer },
-  { name: "History", label: "Historia zmian", icon: History },
-  { name: "BannerCreator", label: "Kreator baneru", icon: Image },
-  { name: "ServiceMode", label: "Tryb serwisowy", icon: Settings2 },
+const NAV_SECTIONS = [
+  {
+    title: "Centrum pracy",
+    items: [
+      { name: "Dashboard", label: "Pulpit", icon: LayoutDashboard, hint: "Podsumowanie dnia" },
+      { name: "Orders", label: "Zlecenia", icon: FileText, hint: "Bieżąca produkcja" },
+      { name: "CompletedOrders", label: "Zakończone", icon: Archive, hint: "Zamknięte realizacje" },
+      { name: "Clients", label: "Klienci", icon: Users, hint: "Relacje i kontakty" },
+      { name: "Handoff", label: "Do przekazania", icon: Printer, hint: "Gotowe do odbioru" },
+      { name: "History", label: "Historia zmian", icon: History, hint: "Aktywność zespołu" },
+    ],
+  },
+  {
+    title: "Narzędzia",
+    items: [
+      { name: "BannerCreator", label: "Kreator baneru", icon: Image, hint: "Szybkie przygotowanie" },
+      { name: "ServiceMode", label: "Tryb serwisowy", icon: Settings2, hint: "Ustawienia systemu", adminOnly: true },
+    ],
+  },
 ];
+
+function SidebarLink({ item, isActive, onClick, isDarkMode }) {
+  const baseClasses = isDarkMode
+    ? "text-slate-300 hover:text-white hover:bg-white/8"
+    : "text-slate-600 hover:text-slate-950 hover:bg-slate-900/5";
+  const activeClasses = isDarkMode
+    ? "bg-white text-slate-950 shadow-[0_16px_40px_-24px_rgba(255,255,255,0.8)]"
+    : "bg-slate-950 text-white shadow-[0_20px_45px_-24px_rgba(15,23,42,0.55)]";
+  const iconClasses = isDarkMode
+    ? isActive
+      ? "bg-slate-900 text-white"
+      : "bg-white/8 text-slate-300"
+    : isActive
+      ? "bg-white/20 text-white"
+      : "bg-slate-900/5 text-slate-500";
+
+  return (
+    <Link
+      to={createPageUrl(item.name)}
+      onClick={onClick}
+      className={`group flex items-center gap-3 rounded-[24px] px-3 py-3 transition-all duration-200 ${isActive ? activeClasses : baseClasses}`}
+    >
+      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors ${iconClasses}`}>
+        <item.icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold">{item.label}</p>
+        <p className={`truncate text-xs ${isActive ? "text-inherit/70" : isDarkMode ? "text-slate-500 group-hover:text-slate-400" : "text-slate-400 group-hover:text-slate-500"}`}>
+          {item.hint}
+        </p>
+      </div>
+    </Link>
+  );
+}
 
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,15 +85,15 @@ export default function Layout({ children, currentPageName }) {
   const [mounted, setMounted] = useState(false);
   const { authorLabel, avatarUrl, signOut, role } = useAuth();
   const { theme, setTheme } = useTheme();
-  const visibleNavItems = NAV_ITEMS.filter((item) => item.name !== "ServiceMode" || role === "admin");
 
   useEffect(() => {
     const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
       }
     };
+
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
@@ -42,138 +103,184 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const isDarkMode = !mounted || theme !== "light";
+  const visibleSections = useMemo(
+    () =>
+      NAV_SECTIONS.map((section) => ({
+        ...section,
+        items: section.items.filter((item) => !item.adminOnly || role === "admin"),
+      })).filter((section) => section.items.length > 0),
+    [role]
+  );
+
+  const shellClasses = isDarkMode
+    ? "bg-[#08111f] text-slate-100"
+    : "bg-[#edf2f7] text-slate-900";
+  const frameClasses = isDarkMode
+    ? "border-white/10 bg-white/[0.03] shadow-[0_30px_120px_-40px_rgba(8,15,31,0.95)]"
+    : "border-white/80 bg-white/75 shadow-[0_35px_90px_-40px_rgba(15,23,42,0.28)]";
+  const sidebarClasses = isDarkMode
+    ? "border-white/10 bg-white/[0.04]"
+    : "border-slate-200/80 bg-white/85";
+  const headerClasses = isDarkMode
+    ? "border-white/10 bg-white/[0.02]"
+    : "border-slate-200/80 bg-white/70";
+  const panelClasses = isDarkMode
+    ? "border-white/10 bg-white/[0.04]"
+    : "border-slate-200/80 bg-white/90";
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex">
-      <style>{`
-        .dark {
-          --background: 0 0% 4%;
-          --foreground: 240 5% 96%;
-          --card: 240 6% 8%;
-          --card-foreground: 240 5% 96%;
-          --popover: 240 6% 8%;
-          --popover-foreground: 240 5% 96%;
-          --primary: 217 91% 60%;
-          --primary-foreground: 0 0% 100%;
-          --secondary: 240 5% 15%;
-          --secondary-foreground: 240 5% 96%;
-          --muted: 240 4% 16%;
-          --muted-foreground: 240 4% 64%;
-          --accent: 240 5% 15%;
-          --accent-foreground: 240 5% 96%;
-          --destructive: 0 84% 60%;
-          --destructive-foreground: 0 0% 100%;
-          --border: 240 4% 16%;
-          --input: 240 4% 16%;
-          --ring: 217 91% 60%;
-          --radius: 0.5rem;
-        }
-        * { scrollbar-width: thin; scrollbar-color: #27272a transparent; }
-      `}</style>
+    <div className={`min-h-screen ${shellClasses}`}>
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className={`absolute left-[-10%] top-[-15%] h-[28rem] w-[28rem] rounded-full blur-3xl ${isDarkMode ? "bg-cyan-500/16" : "bg-sky-300/30"}`} />
+        <div className={`absolute bottom-[-12%] right-[-8%] h-[24rem] w-[24rem] rounded-full blur-3xl ${isDarkMode ? "bg-blue-500/18" : "bg-indigo-200/45"}`} />
+      </div>
 
-      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed lg:sticky top-0 left-0 h-screen w-60 bg-zinc-900/80 backdrop-blur-xl border-r border-zinc-800/50 
-        flex flex-col z-50 transition-transform duration-200 lg:translate-x-0
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-      `}>
-        <div className="px-5 h-16 flex items-center justify-between border-b border-zinc-800/50">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center">
-              <Printer className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">GCRM</span>
-          </div>
-          <button className="lg:hidden text-zinc-400 hover:text-zinc-100" onClick={() => setSidebarOpen(false)}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {visibleNavItems.map(item => {
-            const isActive = currentPageName === item.name;
-            return (
-              <Link key={item.name} to={createPageUrl(item.name)}
-                onClick={() => setSidebarOpen(false)}
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                  ${isActive 
-                    ? "bg-blue-600/10 text-blue-400" 
-                    : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50"}
-                `}>
-                <item.icon className="w-4.5 h-4.5" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="px-5 py-4 border-t border-zinc-800/50 text-xs text-zinc-600">
-          Markedia Company
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen min-w-0">
-        <header className="h-16 border-b border-zinc-800/50 flex items-center px-5 gap-4 shrink-0 bg-zinc-950/80 backdrop-blur-sm sticky top-0 z-30">
-          <button className="lg:hidden text-zinc-400 hover:text-zinc-100" onClick={() => setSidebarOpen(true)}>
-            <Menu className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setSearchOpen(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/60 border border-zinc-700/50 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600 transition-colors text-sm"
+      <div className="relative mx-auto flex min-h-screen max-w-[1680px] p-3 lg:p-5">
+        <div className={`flex w-full overflow-hidden rounded-[32px] border backdrop-blur-2xl ${frameClasses}`}>
+          <aside
+            className={`fixed inset-y-3 left-3 z-50 flex w-[310px] max-w-[calc(100vw-1.5rem)] flex-col rounded-[28px] border p-4 transition-transform duration-300 lg:static lg:inset-auto lg:h-auto lg:w-[300px] lg:max-w-none lg:translate-x-0 ${sidebarClasses} ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-[110%]"
+            }`}
           >
-            <Search className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Szukaj...</span>
-            <kbd className="hidden sm:inline text-xs border border-zinc-700 rounded px-1">Ctrl+K</kbd>
-          </button>
-          <div className="flex-1" />
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTheme(isDarkMode ? "light" : "dark")}
-              className="bg-zinc-800/20 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 gap-2"
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              {isDarkMode ? "Jasny" : "Ciemny"}
-            </Button>
-            <Link
-              to="/profile"
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/30 border border-zinc-800/60 text-zinc-300 hover:text-zinc-100 hover:border-zinc-700 transition-colors text-sm"
-            >
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt=""
-                  className="w-6 h-6 rounded-full object-cover border border-zinc-700"
-                />
-              ) : (
-                <User2 className="w-4 h-4" />
-              )}
-              <span className="max-w-40 truncate">{authorLabel}</span>
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => signOut()}
-              className="bg-zinc-800/20 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100 gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Wyloguj
-            </Button>
-          </div>
-        </header>
-        <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+            <div className="flex items-center justify-between gap-3 px-2 py-2">
+              <div className="flex items-center gap-3">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-[22px] ${isDarkMode ? "bg-white text-slate-950" : "bg-slate-950 text-white"}`}>
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-lg font-semibold tracking-tight">Mobart Flow</p>
+                  <p className={isDarkMode ? "text-sm text-slate-400" : "text-sm text-slate-500"}>Studio operacyjne</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className={`rounded-2xl p-2 lg:hidden ${isDarkMode ? "text-slate-400 hover:bg-white/8 hover:text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"}`}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-        <main className="flex-1 p-5 lg:p-8 max-w-7xl w-full mx-auto">
-          {children}
-        </main>
+            <div className={`mt-5 rounded-[26px] border p-4 ${panelClasses}`}>
+              <p className={`text-xs font-medium uppercase tracking-[0.24em] ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Dzisiejszy fokus</p>
+              <h2 className="mt-2 text-xl font-semibold leading-tight">Lepiej widoczna praca zespołu, mniej klikania między modułami.</h2>
+              <p className={`mt-2 text-sm leading-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                Zaczynamy od menu i pulpitu, żeby najważniejsze akcje były bliżej ręki.
+              </p>
+            </div>
+
+            <div className="mt-6 flex-1 space-y-6 overflow-y-auto pr-1">
+              {visibleSections.map((section) => (
+                <div key={section.title}>
+                  <p className={`px-3 text-xs font-medium uppercase tracking-[0.24em] ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{section.title}</p>
+                  <div className="mt-3 space-y-2">
+                    {section.items.map((item) => (
+                      <SidebarLink
+                        key={item.name}
+                        item={item}
+                        isActive={currentPageName === item.name}
+                        onClick={() => setSidebarOpen(false)}
+                        isDarkMode={isDarkMode}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className={`mt-6 rounded-[26px] border p-4 ${panelClasses}`}>
+              <div className="flex items-center gap-3">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="h-12 w-12 rounded-2xl object-cover" />
+                ) : (
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${isDarkMode ? "bg-white/8 text-slate-300" : "bg-slate-100 text-slate-600"}`}>
+                    <User2 className="h-5 w-5" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{authorLabel}</p>
+                  <p className={`truncate text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    {role === "admin" ? "Administrator" : "Członek zespołu"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => signOut()}
+                className={`mt-4 w-full justify-center gap-2 rounded-2xl border ${isDarkMode ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-slate-50 text-slate-900 hover:bg-slate-100"}`}
+              >
+                <LogOut className="h-4 w-4" />
+                Wyloguj
+              </Button>
+            </div>
+          </aside>
+
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className={`sticky top-0 z-30 flex h-20 items-center gap-3 border-b px-4 sm:px-6 lg:px-8 ${headerClasses}`}>
+              <button
+                type="button"
+                className={`rounded-2xl p-2 lg:hidden ${isDarkMode ? "text-slate-300 hover:bg-white/8 hover:text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"}`}
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className={`group flex flex-1 items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition-colors sm:max-w-xl ${panelClasses}`}
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isDarkMode ? "bg-white/8 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
+                  <Search className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-medium ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Szukaj zleceń, klientów i akcji</p>
+                  <p className={`truncate text-xs ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Najkrótsza droga do danych w systemie</p>
+                </div>
+                <kbd className={`hidden rounded-xl border px-2 py-1 text-xs sm:inline-flex ${isDarkMode ? "border-white/10 text-slate-400" : "border-slate-200 text-slate-500"}`}>Ctrl+K</kbd>
+              </button>
+
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTheme(isDarkMode ? "light" : "dark")}
+                  className={`rounded-2xl border px-3 ${isDarkMode ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"}`}
+                >
+                  {isDarkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                  {isDarkMode ? "Jasny" : "Ciemny"}
+                </Button>
+                <Link
+                  to="/profile"
+                  className={`hidden items-center gap-3 rounded-[22px] border px-3 py-2 sm:flex ${panelClasses}`}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" className="h-11 w-11 rounded-2xl object-cover" />
+                  ) : (
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${isDarkMode ? "bg-white/8 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
+                      <User2 className="h-4 w-4" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="max-w-40 truncate text-sm font-semibold">{authorLabel}</p>
+                    <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Profil i ustawienia</p>
+                  </div>
+                </Link>
+              </div>
+            </header>
+
+            <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+
+            <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
+              {children}
+            </main>
+          </div>
+        </div>
       </div>
     </div>
   );
