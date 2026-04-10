@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Save, RotateCcw, Trash2, Settings2, Loader2, ShieldAlert, ChevronDown } from "lucide-react";
+import { Plus, Save, RotateCcw, Trash2, Settings2, Loader2, ShieldAlert, ChevronDown, Users, Layers3, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,6 +101,7 @@ export default function ServiceMode() {
   const [teamDraft, setTeamDraft] = useState(teamConfig);
   const [saving, setSaving] = useState(false);
   const [openTechnologyKey, setOpenTechnologyKey] = useState(null);
+  const [activeSection, setActiveSection] = useState(null);
 
   useEffect(() => {
     setDraft(config);
@@ -226,6 +227,11 @@ export default function ServiceMode() {
       .finally(() => setSaving(false));
   };
 
+  const handleBackToCategories = () => {
+    setActiveSection(null);
+    setOpenTechnologyKey(null);
+  };
+
   if (role !== "admin") {
     return (
       <div className="max-w-3xl mx-auto rounded-2xl border border-red-900/50 bg-zinc-900/70 p-8 text-center">
@@ -252,14 +258,13 @@ export default function ServiceMode() {
       <div className="rounded-3xl border border-zinc-800 bg-zinc-950/70 p-6 lg:p-8">
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0 flex-1">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs text-blue-300">
-            <Settings2 className="w-3.5 h-3.5" />
-            Tryb serwisowy
-          </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs text-blue-300">
+              <Settings2 className="w-3.5 h-3.5" />
+              Tryb serwisowy
+            </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-zinc-100 lg:text-4xl">Edytor kategorii i materiałów</h1>
             <p className="mt-3 max-w-3xl text-base leading-7 text-zinc-400">
-              Tutaj zmienisz technologie, grupy i konkretne pozycje widoczne w formularzu zleceń.
-              Przykładowo możesz dodać plakaty i flagi, podmienić folie w Mild Solvent albo całkiem usunąć banery.
+              Najpierw wybierz obszar, który chcesz edytować. Osobno możesz zarządzać technologiami i materiałami albo zespołem.
             </p>
             <div className="mt-4 inline-flex rounded-full border border-zinc-800 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400">
               Tryb zapisu: {storageMode === "supabase" ? "Supabase wspólny dla wszystkich" : "lokalny awaryjny"}
@@ -269,16 +274,29 @@ export default function ServiceMode() {
             </div>
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:min-w-[240px] xl:items-stretch">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleReset}
-              disabled={saving}
-              className="h-11 justify-center border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Przywróć domyślne
-            </Button>
+            {activeSection && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleBackToCategories}
+                className="h-11 justify-center border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Wróć do wyboru
+              </Button>
+            )}
+            {activeSection === "technologies" && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleReset}
+                disabled={saving}
+                className="h-11 justify-center border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Przywróć domyślne
+              </Button>
+            )}
             <Button
               type="button"
               onClick={handleSave}
@@ -309,8 +327,62 @@ export default function ServiceMode() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+      {!activeSection && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => setActiveSection("technologies")}
+            className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-7 text-left transition-all hover:border-blue-500/30 hover:bg-zinc-900 hover:shadow-[0_0_0_1px_rgba(59,130,246,0.15)]"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-500/20 bg-blue-500/10 text-blue-300">
+                  <Layers3 className="w-5 h-5" />
+                </div>
+                <h2 className="mt-5 text-2xl font-semibold text-zinc-100">Technologie i materiały</h2>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
+                  Edytuj technologie, grupy materiałów, kolory przycisków i wszystkie pozycje widoczne w formularzu zleceń.
+                </p>
+              </div>
+              <ChevronDown className="w-5 h-5 rotate-[-90deg] text-zinc-500" />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">{draft.length} technologii</span>
+              <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">
+                {draft.reduce((count, technology) => count + technology.groups.length, 0)} grup
+              </span>
+              <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">{totalItems} materiałów</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSection("team")}
+            className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-7 text-left transition-all hover:border-emerald-500/30 hover:bg-zinc-900 hover:shadow-[0_0_0_1px_rgba(16,185,129,0.15)]"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-300">
+                  <Users className="w-5 h-5" />
+                </div>
+                <h2 className="mt-5 text-2xl font-semibold text-zinc-100">Zespół</h2>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
+                  Zarządzaj listą pracowników i grafików używanych później w formularzach zamówień.
+                </p>
+              </div>
+              <ChevronDown className="w-5 h-5 rotate-[-90deg] text-zinc-500" />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">{teamDraft.employees.length} pracowników</span>
+              <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">{teamDraft.designers.length} grafików</span>
+            </div>
+          </button>
+        </div>
+      )}
+
+      {activeSection === "team" && (
+        <div className="grid gap-6 xl:grid-cols-2">
+          <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Zespół</p>
@@ -357,9 +429,9 @@ export default function ServiceMode() {
               </div>
             ))}
           </div>
-        </section>
+          </section>
 
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+          <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Zespół</p>
@@ -406,9 +478,11 @@ export default function ServiceMode() {
               </div>
             ))}
           </div>
-        </section>
-      </div>
+          </section>
+        </div>
+      )}
 
+      {activeSection === "technologies" && (
       <div className="grid gap-6 xl:grid-cols-3">
         {draft.map((technology, techIndex) => {
           const accent = getColorAccent(technology.color);
@@ -635,16 +709,19 @@ export default function ServiceMode() {
           );
         })}
       </div>
+      )}
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={addTechnology}
-        className="h-14 w-full rounded-2xl border-dashed border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
-      >
-        <Plus className="w-4 h-4" />
-        Dodaj nową technologię
-      </Button>
+      {activeSection === "technologies" && (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addTechnology}
+          className="h-14 w-full rounded-2xl border-dashed border-zinc-700 bg-zinc-900/40 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+        >
+          <Plus className="w-4 h-4" />
+          Dodaj nową technologię
+        </Button>
+      )}
     </div>
   );
 }
