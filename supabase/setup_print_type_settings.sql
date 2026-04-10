@@ -143,6 +143,36 @@ to authenticated
 using (public.is_app_admin())
 with check (public.is_app_admin());
 
+create or replace function public.admin_delete_user(target_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if not public.is_app_admin() then
+    raise exception 'Brak uprawnień do usuwania użytkowników.';
+  end if;
+
+  if target_user_id is null then
+    raise exception 'Brak identyfikatora użytkownika.';
+  end if;
+
+  if target_user_id = auth.uid() then
+    raise exception 'Nie możesz usunąć własnego konta z poziomu panelu administratora.';
+  end if;
+
+  delete from auth.users
+  where id = target_user_id;
+
+  if not found then
+    raise exception 'Nie znaleziono użytkownika do usunięcia.';
+  end if;
+end;
+$$;
+
+grant execute on function public.admin_delete_user(uuid) to authenticated;
+
 insert into public.user_profiles (id, username, email, display_name, avatar_url, is_admin)
 select
   u.id,

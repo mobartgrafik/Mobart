@@ -50,6 +50,19 @@ export async function fetchCurrentUserProfile(userId) {
   return data ? normalizeProfile(data) : null;
 }
 
+export async function deleteUserAccount(targetUserId) {
+  if (!targetUserId) {
+    throw new Error("Brak identyfikatora użytkownika.");
+  }
+
+  const { error } = await supabase.rpc("admin_delete_user", {
+    target_user_id: targetUserId,
+  });
+
+  if (error) throw error;
+  return true;
+}
+
 export function useUserProfiles() {
   const [profiles, setProfiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

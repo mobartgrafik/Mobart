@@ -9,7 +9,18 @@ import { PRINT_TYPE_COLORS, usePrintTypeConfig } from "@/lib/printTypeConfig";
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
 import { useTeamConfig } from "@/lib/teamConfig";
-import { useUserProfiles } from "@/lib/userProfiles";
+import { deleteUserAccount, useUserProfiles } from "@/lib/userProfiles";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const createTechnologyDraft = () => ({
   key: `tech_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -103,6 +114,7 @@ export default function ServiceMode() {
   const [teamDraft, setTeamDraft] = useState(teamConfig);
   const [profilesDraft, setProfilesDraft] = useState(profiles);
   const [saving, setSaving] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState(null);
   const [openTechnologyKey, setOpenTechnologyKey] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
 
@@ -238,6 +250,35 @@ export default function ServiceMode() {
   const handleBackToCategories = () => {
     setActiveSection(null);
     setOpenTechnologyKey(null);
+  };
+
+  const handleDeleteUser = async (profile) => {
+    if (!profile?.id) {
+      toast({
+        variant: "destructive",
+        title: "Nie można usunąć konta",
+        description: "Brakuje identyfikatora użytkownika.",
+      });
+      return;
+    }
+
+    setDeletingUserId(profile.id);
+    try {
+      await deleteUserAccount(profile.id);
+      setProfilesDraft((prev) => prev.filter((item) => item.id !== profile.id));
+      toast({
+        title: "Konto usunięte",
+        description: `Użytkownik ${profile.display_name || profile.username || profile.email || "bez nazwy"} został usunięty i może zarejestrować się ponownie.`,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Nie udało się usunąć użytkownika",
+        description: error?.message || "Sprawdź, czy funkcja admin_delete_user została wdrożona w Supabase.",
+      });
+    } finally {
+      setDeletingUserId(null);
+    }
   };
 
   if (role !== "admin") {
@@ -551,31 +592,70 @@ export default function ServiceMode() {
                       @{profile.username || "brak-loginu"}{profile.email ? ` • ${profile.email}` : ""}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={profile.id === user?.id && profile.is_admin}
-                    onClick={() =>
-                      setProfilesDraft((prev) =>
-                        prev.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, is_admin: !item.is_admin } : item
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={profile.id === user?.id && profile.is_admin}
+                      onClick={() =>
+                        setProfilesDraft((prev) =>
+                          prev.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, is_admin: !item.is_admin } : item
+                          )
                         )
-                      )
-                    }
-                    className={cn(
-                      "h-10 min-w-[180px] justify-center",
-                      profile.is_admin
-                        ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
-                        : "border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
-                    )}
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    {profile.id === user?.id && profile.is_admin
-                      ? "Nie możesz odebrać sobie admina"
-                      : profile.is_admin
-                        ? "Usuń admina"
-                        : "Nadaj admina"}
-                  </Button>
+                      }
+                      className={cn(
+                        "h-10 min-w-[180px] justify-center",
+                        profile.is_admin
+                          ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
+                          : "border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+                      )}
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      {profile.id === user?.id && profile.is_admin
+                        ? "Nie możesz odebrać sobie admina"
+                        : profile.is_admin
+                          ? "Usuń admina"
+                          : "Nadaj admina"}
+                    </Button>
+
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={profile.id === user?.id || deletingUserId === profile.id}
+                          className="h-10 min-w-[180px] justify-center border-red-900/70 bg-zinc-950 text-red-300 hover:bg-red-950/40 hover:text-red-200"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {profile.id === user?.id ? "Nie możesz usunąć siebie" : deletingUserId === profile.id ? "Usuwanie..." : "Usuń konto"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="border-zinc-800 bg-zinc-900 text-zinc-100">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Usunąć konto użytkownika?</AlertDialogTitle>
+                          <AlertDialogDescription className="text-zinc-400">
+                            To usunie konto z Supabase Auth i profil aplikacyjny. Taki użytkownik będzie musiał zarejestrować się ponownie, jeśli ma wrócić do systemu.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4 text-sm text-zinc-300">
+                          <div>{profile.display_name || profile.username || "Bez nazwy"}</div>
+                          <div className="mt-1 text-zinc-500">
+                            @{profile.username || "brak-loginu"}{profile.email ? ` • ${profile.email}` : ""}
+                          </div>
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel className="border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100">Anuluj</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteUser(profile)}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Tak, usuń konto
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </div>
               ))}
             </div>
