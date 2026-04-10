@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Upload } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getStorageProviderLabel, uploadAvatarFile } from "@/lib/fileStorage";
 import {
@@ -26,6 +27,7 @@ export default function Profile() {
   const [changingLogin, setChangingLogin] = useState(false);
   const [confirmCurrentLogin, setConfirmCurrentLogin] = useState("");
   const [newLogin, setNewLogin] = useState("");
+  const fileInputRef = useRef(null);
   const storageProviderLabel = useMemo(() => getStorageProviderLabel(), []);
 
   const normalizedRole = useMemo(() => (role === "admin" ? "Administrator" : "Użytkownik"), [role]);
@@ -84,6 +86,10 @@ export default function Profile() {
     }
   };
 
+  const handlePickAvatar = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="max-w-2xl space-y-5">
       <div>
@@ -106,12 +112,47 @@ export default function Profile() {
           </div>
           <div className="flex-1">
             <Label className="text-zinc-400 text-xs">Avatar</Label>
-            <Input
+            <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={(e) => setNewAvatarFile(e.target.files?.[0] || null)}
-              className="bg-zinc-800 border-zinc-700 text-zinc-100 mt-1"
+              className="hidden"
             />
+            <div className="mt-1 flex flex-col gap-2 rounded-xl border border-zinc-700 bg-zinc-800/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-zinc-100">
+                  {newAvatarFile ? newAvatarFile.name : "Nie wybrano nowego pliku"}
+                </div>
+                <div className="text-xs text-zinc-500">
+                  PNG, JPG lub WEBP. Po zapisie avatar zostanie wysłany do {storageProviderLabel}.
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePickAvatar}
+                  className="border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+                >
+                  <Upload className="w-4 h-4" />
+                  Wybierz plik
+                </Button>
+                {newAvatarFile && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      setNewAvatarFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  >
+                    Wyczyść
+                  </Button>
+                )}
+              </div>
+            </div>
             <div className="text-xs text-zinc-600 mt-1">
               Plik zapisuje się do {storageProviderLabel} i jest podpinany do profilu.
             </div>
