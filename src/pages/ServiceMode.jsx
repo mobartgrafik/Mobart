@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Save, RotateCcw, Trash2, Settings2, Loader2, ShieldAlert, ChevronDown, Users, Layers3, ArrowLeft } from "lucide-react";
+import { Plus, Save, RotateCcw, Trash2, Settings2, Loader2, ShieldAlert, ChevronDown, Users, Layers3, ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { PRINT_TYPE_COLORS, usePrintTypeConfig } from "@/lib/printTypeConfig";
 import { useAuth } from "@/lib/AuthContext";
 import { cn } from "@/lib/utils";
 import { useTeamConfig } from "@/lib/teamConfig";
+import { useUserProfiles } from "@/lib/userProfiles";
 
 const createTechnologyDraft = () => ({
   key: `tech_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -95,10 +96,12 @@ const formatColorLabel = (color) => color.charAt(0).toUpperCase() + color.slice(
 export default function ServiceMode() {
   const { config, setConfig, resetConfig, isLoading, storageMode } = usePrintTypeConfig();
   const { config: teamConfig, setConfig: setTeamConfig, isLoading: isLoadingTeam, storageMode: teamStorageMode } = useTeamConfig();
+  const { profiles, isLoading: isLoadingProfiles, isAvailable: areProfilesAvailable, saveProfiles } = useUserProfiles();
   const { role } = useAuth();
   const { toast } = useToast();
   const [draft, setDraft] = useState(config);
   const [teamDraft, setTeamDraft] = useState(teamConfig);
+  const [profilesDraft, setProfilesDraft] = useState(profiles);
   const [saving, setSaving] = useState(false);
   const [openTechnologyKey, setOpenTechnologyKey] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
@@ -110,6 +113,10 @@ export default function ServiceMode() {
   useEffect(() => {
     setTeamDraft(teamConfig);
   }, [teamConfig]);
+
+  useEffect(() => {
+    setProfilesDraft(profiles);
+  }, [profiles]);
 
   useEffect(() => {
     if (!draft.length) {
@@ -198,16 +205,17 @@ export default function ServiceMode() {
 
   const handleSave = () => {
     setSaving(true);
-    Promise.all([setConfig(draft), setTeamConfig(teamDraft)])
-      .then(([savedConfig, savedTeam]) => {
+    Promise.all([setConfig(draft), setTeamConfig(teamDraft), saveProfiles(profilesDraft)])
+      .then(([savedConfig, savedTeam, savedProfiles]) => {
         setDraft(savedConfig);
         setTeamDraft(savedTeam);
+        setProfilesDraft(savedProfiles);
         toast({
           variant: "success",
           title: "Tryb serwisowy zapisany",
           description:
-            storageMode === "supabase" && teamStorageMode === "supabase"
-              ? "Kategorie, pracownicy i graficy są już aktywni dla wszystkich."
+            storageMode === "supabase" && teamStorageMode === "supabase" && areProfilesAvailable
+              ? "Kategorie, pracownicy, graficy i admini są już aktywni dla wszystkich."
               : "Zmiany zapisane. Gdy wszystkie klucze będą gotowe w Supabase, zapis będzie wspólny dla wszystkich.",
         });
       })
@@ -244,7 +252,7 @@ export default function ServiceMode() {
     );
   }
 
-  if (isLoading || isLoadingTeam) {
+  if (isLoading || isLoadingTeam || isLoadingProfiles) {
     return (
       <div className="max-w-3xl mx-auto rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8 text-center">
         <Loader2 className="w-8 h-8 mx-auto animate-spin text-blue-400" />
@@ -377,6 +385,31 @@ export default function ServiceMode() {
               <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">{teamDraft.designers.length} grafików</span>
             </div>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveSection("admins")}
+            className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-7 text-left transition-all hover:border-amber-500/30 hover:bg-zinc-900 hover:shadow-[0_0_0_1px_rgba(245,158,11,0.15)]"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-300">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <h2 className="mt-5 text-2xl font-semibold text-zinc-100">Administratorzy</h2>
+                <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
+                  Zobacz zarejestrowane osoby i nadaj im uprawnienia administratora w aplikacji.
+                </p>
+              </div>
+              <ChevronDown className="w-5 h-5 rotate-[-90deg] text-zinc-500" />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">{profilesDraft.length} kont</span>
+              <span className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-zinc-300">
+                {profilesDraft.filter((profile) => profile.is_admin).length} adminów
+              </span>
+            </div>
+          </button>
         </div>
       )}
 
@@ -480,6 +513,64 @@ export default function ServiceMode() {
           </div>
           </section>
         </div>
+      )}
+
+      {activeSection === "admins" && (
+        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Uprawnienia</p>
+              <h2 className="mt-2 text-2xl font-semibold text-zinc-100">Administratorzy</h2>
+            </div>
+            <div className="rounded-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 text-xs text-zinc-400">
+              {profilesDraft.filter((profile) => profile.is_admin).length} adminów
+            </div>
+          </div>
+
+          {!areProfilesAvailable ? (
+            <div className="mt-5 rounded-2xl border border-amber-900/40 bg-amber-500/5 p-5 text-sm text-amber-200">
+              Brakuje tabeli `user_profiles` w Supabase. Po uruchomieniu nowego SQL ta sekcja pokaże zarejestrowanych użytkowników.
+            </div>
+          ) : (
+            <div className="mt-5 grid gap-3">
+              {profilesDraft.map((profile, index) => (
+                <div key={profile.id || `${profile.username}-${index}`} className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${profile.is_admin ? "bg-amber-400" : "bg-zinc-600"}`} />
+                      <p className="truncate text-base font-medium text-zinc-100">
+                        {profile.display_name || profile.username || "Bez nazwy"}
+                      </p>
+                    </div>
+                    <p className="mt-1 truncate text-sm text-zinc-400">
+                      @{profile.username || "brak-loginu"}{profile.email ? ` • ${profile.email}` : ""}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setProfilesDraft((prev) =>
+                        prev.map((item, itemIndex) =>
+                          itemIndex === index ? { ...item, is_admin: !item.is_admin } : item
+                        )
+                      )
+                    }
+                    className={cn(
+                      "h-10 min-w-[180px] justify-center",
+                      profile.is_admin
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
+                        : "border-zinc-700 bg-zinc-950 text-zinc-200 hover:bg-zinc-800 hover:text-zinc-100"
+                    )}
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    {profile.is_admin ? "Usuń admina" : "Nadaj admina"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {activeSection === "technologies" && (

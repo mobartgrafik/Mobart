@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/supabase';
+import { fetchCurrentUserProfile, syncCurrentUserProfile } from '@/lib/userProfiles';
 
 const AuthContext = createContext();
-const ADMIN_USERNAMES = new Set(['kingastachura', 'gabrielsedkowski']);
+const LEGACY_ADMIN_USERNAMES = new Set(['kingastachura', 'gabrielsedkowski']);
 
 const normalizeUsername = (s) => String(s || '').trim().toLowerCase();
 
@@ -10,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [authError, setAuthError] = useState(null);
+  const [profileRole, setProfileRole] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -57,10 +59,45 @@ export const AuthProvider = ({ children }) => {
 
   const role = useMemo(() => {
     const u = normalizeUsername(username);
-    return ADMIN_USERNAMES.has(u) ? 'admin' : 'user';
-  }, [username]);
+    if (profileRole) return profileRole;
+    return LEGACY_ADMIN_USERNAMES.has(u) ? 'admin' : 'user';
+  }, [profileRole, username]);
 
   const isAuthenticated = !!user;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncProfile = async () => {
+      if (!user?.id) {
+        setProfileRole(null);
+        return;
+      }
+
+      try {
+        await syncCurrentUserProfile({
+          id: user.id,
+          username,
+          email: user.email,
+          displayName,
+          avatarUrl,
+        });
+        const profile = await fetchCurrentUserProfile(user.id);
+        if (!cancelled) {
+          setProfileRole(profile?.is_admin ? 'admin' : 'user');
+        }
+      } catch (error) {
+        console.error('Nie udało się zsynchronizować profilu użytkownika:', error);
+        if (!cancelled) setProfileRole(null);
+      }
+    };
+
+    syncProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [avatarUrl, displayName, user?.email, user?.id, username]);
 
   const signIn = async ({ identifier, password }) => {
     setAuthError(null);
