@@ -1,13 +1,13 @@
 // Centralne wartości domenowe dla zleceń.
 // Dzięki temu UI i filtry używają spójnych stringów (a stare dane da się „znormalizować”).
 
-export const ORDER_STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
+export const ORDER_STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Przekazane", "Zakończone"];
 
 export function normalizeOrderStatus(status) {
   const s = String(status || "").trim();
   if (!s) return s;
-  // Legacy/alias: w starszych wersjach UI było "Przekazane".
-  if (s === "Przekazane") return "Wydrukowane";
+  // Legacy/alias: starsze dane mogły używać "Wydrukowane".
+  if (s === "Wydrukowane") return "Przekazane";
   return s;
 }
 

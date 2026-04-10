@@ -12,7 +12,7 @@ const columnColors = {
   "Nowe": "border-t-blue-500",
   "W trakcie": "border-t-amber-500",
   "Do przekazania": "border-t-purple-500",
-  "Wydrukowane": "border-t-emerald-500",
+  "Przekazane": "border-t-emerald-500",
   "Zakończone": "border-t-zinc-500",
 };
 

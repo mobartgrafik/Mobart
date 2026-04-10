@@ -34,7 +34,7 @@ export default function Handoff() {
     mutationFn: async (id) => {
       const { error } = await supabase
         .from("orders")
-        .update({ status: "Wydrukowane" })
+        .update({ status: "Przekazane" })
         .eq("id", id);
       if (error) throw error;
     },
@@ -97,7 +97,7 @@ export default function Handoff() {
               <Button onClick={() => markPrinted.mutate(order.id)}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shrink-0"
                 disabled={markPrinted.isPending}>
-                <ArrowRight className="w-4 h-4" />Oznacz jako wydrukowane
+                <ArrowRight className="w-4 h-4" />Oznacz jako przekazane
               </Button>
             </div>
           ))}

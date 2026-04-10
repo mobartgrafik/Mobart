@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { deleteStoredFile, deleteStoredFiles, getStorageProviderLabel, getStoredFileDownloadUrl, getStoredFileSequenceLabel, uploadOrderFiles } from "@/lib/fileStorage";
 import { useTeamConfig } from "@/lib/teamConfig";
 
-const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Wydrukowane", "Zakończone"];
+const STATUSES = ["Nowe", "W trakcie", "Do przekazania", "Przekazane", "Zakończone"];
 const PRIORITIES = ["niski", "średni", "wysoki"];
 const CHANNELS = ["Mobart", "Viper", "Zlecenie ze sklepu"];
 const SETTLEMENTS = ["nierozliczone", "rozliczone", "częściowo rozliczone"];

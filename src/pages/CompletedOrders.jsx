@@ -46,7 +46,7 @@ export default function CompletedOrders() {
     mutationFn: async (order) => {
       const { error } = await supabase
         .from("orders")
-        .update({ status: "Wydrukowane" })
+        .update({ status: "Przekazane" })
         .eq("id", order.id);
 
       if (error) throw error;

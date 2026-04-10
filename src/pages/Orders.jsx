@@ -18,7 +18,7 @@ import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues"
 import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
 import { useToast } from "@/components/ui/use-toast";
 
-const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Wydrukowane"];
+const STATUSES = ["Wszystkie", "Nowe", "W trakcie", "Do przekazania", "Przekazane"];
 const PRIORITIES = ["Wszystkie", "niski", "średni", "wysoki"];
 
 export default function Orders() {

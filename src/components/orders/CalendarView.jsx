@@ -11,7 +11,7 @@ const STATUS_COLORS = {
   "Nowe": "bg-blue-600/80 border-blue-500",
   "W trakcie": "bg-yellow-600/80 border-yellow-500",
   "Do przekazania": "bg-orange-600/80 border-orange-500",
-  "Wydrukowane": "bg-purple-600/80 border-purple-500",
+  "Przekazane": "bg-purple-600/80 border-purple-500",
   "Zakończone": "bg-green-700/80 border-green-600",
 };
 
