@@ -88,6 +88,28 @@ $$;
 
 grant execute on function public.is_app_admin() to authenticated;
 
+create or replace function public.prevent_self_admin_removal()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if old.id = auth.uid() and old.is_admin = true and new.is_admin = false then
+    raise exception 'Nie możesz odebrać sobie uprawnień administratora.';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists user_profiles_prevent_self_admin_removal on public.user_profiles;
+
+create trigger user_profiles_prevent_self_admin_removal
+before update on public.user_profiles
+for each row
+execute function public.prevent_self_admin_removal();
+
 drop policy if exists "authenticated users can read profiles" on public.user_profiles;
 create policy "authenticated users can read profiles"
 on public.user_profiles

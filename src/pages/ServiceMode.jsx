@@ -97,7 +97,7 @@ export default function ServiceMode() {
   const { config, setConfig, resetConfig, isLoading, storageMode } = usePrintTypeConfig();
   const { config: teamConfig, setConfig: setTeamConfig, isLoading: isLoadingTeam, storageMode: teamStorageMode } = useTeamConfig();
   const { profiles, isLoading: isLoadingProfiles, isAvailable: areProfilesAvailable, saveProfiles } = useUserProfiles();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const { toast } = useToast();
   const [draft, setDraft] = useState(config);
   const [teamDraft, setTeamDraft] = useState(teamConfig);
@@ -541,6 +541,11 @@ export default function ServiceMode() {
                       <p className="truncate text-base font-medium text-zinc-100">
                         {profile.display_name || profile.username || "Bez nazwy"}
                       </p>
+                      {profile.id === user?.id && (
+                        <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[11px] text-zinc-400">
+                          To Ty
+                        </span>
+                      )}
                     </div>
                     <p className="mt-1 truncate text-sm text-zinc-400">
                       @{profile.username || "brak-loginu"}{profile.email ? ` • ${profile.email}` : ""}
@@ -549,6 +554,7 @@ export default function ServiceMode() {
                   <Button
                     type="button"
                     variant="outline"
+                    disabled={profile.id === user?.id && profile.is_admin}
                     onClick={() =>
                       setProfilesDraft((prev) =>
                         prev.map((item, itemIndex) =>
@@ -564,7 +570,11 @@ export default function ServiceMode() {
                     )}
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    {profile.is_admin ? "Usuń admina" : "Nadaj admina"}
+                    {profile.id === user?.id && profile.is_admin
+                      ? "Nie możesz odebrać sobie admina"
+                      : profile.is_admin
+                        ? "Usuń admina"
+                        : "Nadaj admina"}
                   </Button>
                 </div>
               ))}
