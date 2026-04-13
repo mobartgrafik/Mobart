@@ -115,7 +115,7 @@ export default function ServiceMode() {
   const [profilesDraft, setProfilesDraft] = useState(profiles);
   const [saving, setSaving] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState(null);
-  const [openTechnologyKey, setOpenTechnologyKey] = useState(null);
+  const [openTechnologyIndex, setOpenTechnologyIndex] = useState(null);
   const [activeSection, setActiveSection] = useState(null);
 
   useEffect(() => {
@@ -132,13 +132,13 @@ export default function ServiceMode() {
 
   useEffect(() => {
     if (!draft.length) {
-      setOpenTechnologyKey(null);
+      setOpenTechnologyIndex(null);
       return;
     }
-    if (openTechnologyKey && !draft.some((technology) => technology.key === openTechnologyKey)) {
-      setOpenTechnologyKey(null);
+    if (openTechnologyIndex !== null && !draft[openTechnologyIndex]) {
+      setOpenTechnologyIndex(null);
     }
-  }, [draft, openTechnologyKey]);
+  }, [draft, openTechnologyIndex]);
 
   const totalItems = useMemo(
     () =>
@@ -162,7 +162,7 @@ export default function ServiceMode() {
     setDraft((prev) => {
       const next = [...prev, createTechnologyDraft()];
       const nextIndex = next.length - 1;
-      setOpenTechnologyKey(next[nextIndex].key || null);
+      setOpenTechnologyIndex(nextIndex);
       return next;
     });
   };
@@ -249,7 +249,7 @@ export default function ServiceMode() {
 
   const handleBackToCategories = () => {
     setActiveSection(null);
-    setOpenTechnologyKey(null);
+    setOpenTechnologyIndex(null);
   };
 
   const handleDeleteUser = async (profile) => {
@@ -474,7 +474,7 @@ export default function ServiceMode() {
           </div>
           <div className="mt-5 grid gap-3">
             {teamDraft.employees.map((employee, index) => (
-              <div key={`${employee}-${index}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2">
+              <div key={`employee-${index}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2">
                 <Input
                   value={employee}
                   onChange={(e) =>
@@ -523,7 +523,7 @@ export default function ServiceMode() {
           </div>
           <div className="mt-5 grid gap-3">
             {teamDraft.designers.map((designer, index) => (
-              <div key={`${designer}-${index}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2">
+              <div key={`designer-${index}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-950/70 p-2">
                 <Input
                   value={designer}
                   onChange={(e) =>
@@ -575,7 +575,7 @@ export default function ServiceMode() {
           ) : (
             <div className="mt-5 grid gap-3">
               {profilesDraft.map((profile, index) => (
-                <div key={profile.id || `${profile.username}-${index}`} className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 lg:flex-row lg:items-center lg:justify-between">
+                <div key={profile.id || `profile-${index}`} className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950/70 p-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={`h-2.5 w-2.5 rounded-full ${profile.is_admin ? "bg-amber-400" : "bg-zinc-600"}`} />
@@ -667,11 +667,11 @@ export default function ServiceMode() {
       <div className="grid gap-6 xl:grid-cols-3">
         {draft.map((technology, techIndex) => {
           const accent = getColorAccent(technology.color);
-          const isOpen = openTechnologyKey === technology.key;
+          const isOpen = openTechnologyIndex === techIndex;
 
           return (
             <section
-              key={`${technology.key || "technology"}-${techIndex}`}
+              key={`technology-${techIndex}`}
               className={cn(
                 "overflow-hidden rounded-3xl border shadow-[0_0_0_1px_rgba(24,24,27,0.3)]",
                 accent.section,
@@ -680,7 +680,7 @@ export default function ServiceMode() {
             >
               <button
                 type="button"
-                onClick={() => setOpenTechnologyKey(isOpen ? null : technology.key)}
+                onClick={() => setOpenTechnologyIndex(isOpen ? null : techIndex)}
                 className={cn(
                   "w-full border-b border-zinc-800 px-6 py-5 text-left transition-colors",
                   accent.header,
@@ -816,7 +816,7 @@ export default function ServiceMode() {
                   </div>
 
                   {technology.groups.map((group, groupIndex) => (
-                    <div key={`${group.group}-${groupIndex}`} className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5">
+                    <div key={`technology-${techIndex}-group-${groupIndex}`} className="rounded-2xl border border-zinc-800 bg-zinc-950/80 p-5">
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                         <div className="flex-1">
                           <p className="mb-1 text-xs font-medium uppercase tracking-[0.24em] text-zinc-500">Grupa {groupIndex + 1}</p>
@@ -862,7 +862,7 @@ export default function ServiceMode() {
                         </div>
                         <div className="grid gap-3 xl:grid-cols-2">
                           {group.items.map((item, itemIndex) => (
-                            <div key={`${item}-${itemIndex}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-2">
+                            <div key={`technology-${techIndex}-group-${groupIndex}-item-${itemIndex}`} className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/80 p-2">
                               <Input
                                 value={item}
                                 onChange={(e) => updateItem(techIndex, groupIndex, itemIndex, e.target.value)}
