@@ -59,6 +59,7 @@ export default function OrderForm() {
   const [removedFiles, setRemovedFiles] = useState([]);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [clientDropdownOpen, setClientDropdownOpen] = useState(false);
 
   const { data: clients = [] } = useQuery({
@@ -195,8 +196,7 @@ const handleTitleChange = (val) => {
   });
 };
 
-const handleFileUpload = async (e) => {
-  const fileList = Array.from(e.target.files || []);
+const uploadSelectedFiles = async (fileList) => {
   if (!fileList.length) return;
 
   setUploading(true);
@@ -224,8 +224,35 @@ const handleFileUpload = async (e) => {
     });
   } finally {
     setUploading(false);
-    e.target.value = "";
   }
+};
+
+const handleFileUpload = async (e) => {
+  const fileList = Array.from(e.target.files || []);
+  await uploadSelectedFiles(fileList);
+  e.target.value = "";
+};
+
+const handleFileDragOver = (e) => {
+  e.preventDefault();
+  if (!uploading) {
+    setIsDragActive(true);
+  }
+};
+
+const handleFileDragLeave = (e) => {
+  e.preventDefault();
+  if (!e.currentTarget.contains(e.relatedTarget)) {
+    setIsDragActive(false);
+  }
+};
+
+const handleFileDrop = async (e) => {
+  e.preventDefault();
+  setIsDragActive(false);
+  if (uploading) return;
+  const fileList = Array.from(e.dataTransfer?.files || []);
+  await uploadSelectedFiles(fileList);
 };
 
   const removeFile = async (idx) => {
@@ -776,9 +803,22 @@ try {
     </button>
   </div>
 ))}
-          <label className="flex items-center gap-2 cursor-pointer bg-zinc-800 hover:bg-zinc-750 border border-dashed border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-400 hover:text-zinc-300">
+          <label
+            onDragOver={handleFileDragOver}
+            onDragLeave={handleFileDragLeave}
+            onDrop={handleFileDrop}
+            className={`flex items-center gap-2 cursor-pointer border border-dashed rounded-lg px-3 py-2.5 text-sm transition-colors ${
+              isDragActive
+                ? "bg-blue-600/10 border-blue-500 text-blue-300"
+                : "bg-zinc-800 hover:bg-zinc-750 border-zinc-700 text-zinc-400 hover:text-zinc-300"
+            }`}
+          >
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? "Przesyłanie..." : `Dodaj pliki do ${storageProviderLabel} (PDF, JPG, AI, PSD, CDR)`}
+            {uploading
+              ? "Przesyłanie..."
+              : isDragActive
+                ? "Upuść pliki tutaj"
+                : `Dodaj lub przeciągnij pliki do ${storageProviderLabel} (PDF, JPG, AI, PSD, CDR)`}
             <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.ai,.psd,.cdr" className="hidden"
               onChange={handleFileUpload} disabled={uploading} />
           </label>
