@@ -50,8 +50,8 @@ function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
     ? "text-slate-300 hover:text-white hover:bg-white/10"
     : "text-slate-600 hover:text-slate-950 hover:bg-slate-900/5";
   const activeClasses = isDarkMode
-    ? "bg-white text-slate-950 shadow-[0_18px_44px_-24px_rgba(255,255,255,0.8)]"
-    : "bg-slate-950 text-white shadow-[0_20px_45px_-24px_rgba(15,23,42,0.55)]";
+    ? "bg-white text-slate-950 shadow-[0_18px_44px_-24px_rgba(255,255,255,0.8)] ring-1 ring-white/70"
+    : "bg-slate-950 text-white shadow-[0_20px_45px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/10";
   const iconClasses = isDarkMode
     ? isActive
       ? "bg-slate-900 text-white"
@@ -67,17 +67,6 @@ function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
       style={style}
       className={`menu-link group relative flex items-center gap-3 overflow-hidden rounded-[24px] px-3 py-3 transition-all duration-300 ${isActive ? activeClasses : baseClasses}`}
     >
-      <div
-        className={`absolute inset-y-2 left-2 w-1 rounded-full transition-all duration-300 ${
-          isActive
-            ? isDarkMode
-              ? "bg-slate-950/85 opacity-100"
-              : "bg-white/90 opacity-100"
-            : isDarkMode
-              ? "bg-cyan-300/70 opacity-0 group-hover:opacity-100"
-              : "bg-slate-950/20 opacity-0 group-hover:opacity-100"
-        }`}
-      />
       <div
         className={`menu-link-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${iconClasses}`}
       >
@@ -164,16 +153,22 @@ export default function Layout({ children, currentPageName }) {
             }`}
           >
             <div className="flex items-center justify-between gap-3 px-2 py-2">
-              <div className="flex items-center gap-3">
-                <div className={`relative flex h-14 w-14 items-center justify-center rounded-[22px] ${isDarkMode ? "bg-white text-slate-950" : "bg-slate-950 text-white"}`}>
+              <Link
+                to={createPageUrl("Dashboard")}
+                onClick={() => setSidebarOpen(false)}
+                className={`group flex items-center gap-3 rounded-[24px] px-1 py-1 transition-all duration-300 ${
+                  isDarkMode ? "hover:bg-white/6" : "hover:bg-slate-950/5"
+                }`}
+              >
+                <div className={`relative flex h-14 w-14 items-center justify-center rounded-[22px] transition-transform duration-300 group-hover:scale-105 ${isDarkMode ? "bg-white text-slate-950" : "bg-slate-950 text-white"}`}>
                   <div className={`absolute inset-0 rounded-[22px] ${isDarkMode ? "bg-cyan-300/25" : "bg-sky-400/15"} pulse-ring`} />
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-lg font-semibold tracking-tight">Mobart Flow</p>
+                  <p className="text-lg font-semibold tracking-tight">GCRM</p>
                   <p className={isDarkMode ? "text-sm text-slate-400" : "text-sm text-slate-500"}>Studio operacyjne</p>
                 </div>
-              </div>
+              </Link>
               <button
                 type="button"
                 className={`rounded-2xl p-2 lg:hidden ${isDarkMode ? "text-slate-400 hover:bg-white/8 hover:text-white" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"}`}
