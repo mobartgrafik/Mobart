@@ -45,12 +45,12 @@ const NAV_SECTIONS = [
   },
 ];
 
-function SidebarLink({ item, isActive, onClick, isDarkMode }) {
+function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
   const baseClasses = isDarkMode
-    ? "text-slate-300 hover:text-white hover:bg-white/8"
+    ? "text-slate-300 hover:text-white hover:bg-white/10"
     : "text-slate-600 hover:text-slate-950 hover:bg-slate-900/5";
   const activeClasses = isDarkMode
-    ? "bg-white text-slate-950 shadow-[0_16px_40px_-24px_rgba(255,255,255,0.8)]"
+    ? "bg-white text-slate-950 shadow-[0_18px_44px_-24px_rgba(255,255,255,0.8)]"
     : "bg-slate-950 text-white shadow-[0_20px_45px_-24px_rgba(15,23,42,0.55)]";
   const iconClasses = isDarkMode
     ? isActive
@@ -64,9 +64,23 @@ function SidebarLink({ item, isActive, onClick, isDarkMode }) {
     <Link
       to={createPageUrl(item.name)}
       onClick={onClick}
-      className={`group flex items-center gap-3 rounded-[24px] px-3 py-3 transition-all duration-200 ${isActive ? activeClasses : baseClasses}`}
+      style={style}
+      className={`menu-link group relative flex items-center gap-3 overflow-hidden rounded-[24px] px-3 py-3 transition-all duration-300 ${isActive ? activeClasses : baseClasses}`}
     >
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-colors ${iconClasses}`}>
+      <div
+        className={`absolute inset-y-2 left-2 w-1 rounded-full transition-all duration-300 ${
+          isActive
+            ? isDarkMode
+              ? "bg-slate-950/85 opacity-100"
+              : "bg-white/90 opacity-100"
+            : isDarkMode
+              ? "bg-cyan-300/70 opacity-0 group-hover:opacity-100"
+              : "bg-slate-950/20 opacity-0 group-hover:opacity-100"
+        }`}
+      />
+      <div
+        className={`menu-link-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${iconClasses}`}
+      >
         <item.icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
@@ -127,28 +141,32 @@ export default function Layout({ children, currentPageName }) {
   const panelClasses = isDarkMode
     ? "border-white/10 bg-white/[0.04]"
     : "border-slate-200/80 bg-white/90";
+  const quickStatClasses = isDarkMode
+    ? "border-white/10 bg-white/[0.045] text-slate-300"
+    : "border-white/80 bg-white/80 text-slate-700";
 
   return (
     <div className={`min-h-screen ${shellClasses}`}>
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className={`absolute left-[-10%] top-[-15%] h-[28rem] w-[28rem] rounded-full blur-3xl ${isDarkMode ? "bg-cyan-500/16" : "bg-sky-300/30"}`} />
-        <div className={`absolute bottom-[-12%] right-[-8%] h-[24rem] w-[24rem] rounded-full blur-3xl ${isDarkMode ? "bg-blue-500/18" : "bg-indigo-200/45"}`} />
+        <div className={`ambient-orb ambient-orb-slow absolute left-[-10%] top-[-15%] h-[28rem] w-[28rem] rounded-full blur-3xl ${isDarkMode ? "bg-cyan-500/16" : "bg-sky-300/30"}`} />
+        <div className={`ambient-orb ambient-orb-fast absolute bottom-[-12%] right-[-8%] h-[24rem] w-[24rem] rounded-full blur-3xl ${isDarkMode ? "bg-blue-500/18" : "bg-indigo-200/45"}`} />
       </div>
 
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-sm transition-opacity duration-300 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
       <div className="relative mx-auto flex min-h-screen max-w-[1680px] p-3 lg:p-5">
         <div className={`flex w-full overflow-hidden rounded-[32px] border backdrop-blur-2xl ${frameClasses}`}>
           <aside
-            className={`fixed inset-y-3 left-3 z-50 flex w-[310px] max-w-[calc(100vw-1.5rem)] flex-col rounded-[28px] border p-4 transition-transform duration-300 lg:static lg:inset-auto lg:h-auto lg:w-[300px] lg:max-w-none lg:translate-x-0 ${sidebarClasses} ${
+            className={`menu-surface fixed inset-y-3 left-3 z-50 flex w-[310px] max-w-[calc(100vw-1.5rem)] flex-col rounded-[28px] border p-4 transition-transform duration-500 ease-out lg:static lg:inset-auto lg:h-auto lg:w-[300px] lg:max-w-none lg:translate-x-0 ${sidebarClasses} ${
               sidebarOpen ? "translate-x-0" : "-translate-x-[110%]"
             }`}
           >
             <div className="flex items-center justify-between gap-3 px-2 py-2">
               <div className="flex items-center gap-3">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[22px] ${isDarkMode ? "bg-white text-slate-950" : "bg-slate-950 text-white"}`}>
+                <div className={`relative flex h-14 w-14 items-center justify-center rounded-[22px] ${isDarkMode ? "bg-white text-slate-950" : "bg-slate-950 text-white"}`}>
+                  <div className={`absolute inset-0 rounded-[22px] ${isDarkMode ? "bg-cyan-300/25" : "bg-sky-400/15"} pulse-ring`} />
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
@@ -171,6 +189,16 @@ export default function Layout({ children, currentPageName }) {
               <p className={`mt-2 text-sm leading-6 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                 Zaczynamy od menu i pulpitu, żeby najważniejsze akcje były bliżej ręki.
               </p>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className={`rounded-[20px] border px-3 py-2 ${quickStatClasses}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.22em] ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Tempo</p>
+                  <p className="mt-1 text-sm font-semibold">Szybkie wejście</p>
+                </div>
+                <div className={`rounded-[20px] border px-3 py-2 ${quickStatClasses}`}>
+                  <p className={`text-[11px] uppercase tracking-[0.22em] ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>Widok</p>
+                  <p className="mt-1 text-sm font-semibold">Mniej chaosu</p>
+                </div>
+              </div>
             </div>
 
             <div className="mt-6 flex-1 space-y-6 overflow-y-auto pr-1">
@@ -178,13 +206,14 @@ export default function Layout({ children, currentPageName }) {
                 <div key={section.title}>
                   <p className={`px-3 text-xs font-medium uppercase tracking-[0.24em] ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>{section.title}</p>
                   <div className="mt-3 space-y-2">
-                    {section.items.map((item) => (
+                    {section.items.map((item, index) => (
                       <SidebarLink
                         key={item.name}
                         item={item}
                         isActive={currentPageName === item.name}
                         onClick={() => setSidebarOpen(false)}
                         isDarkMode={isDarkMode}
+                        style={{ animationDelay: `${index * 60}ms` }}
                       />
                     ))}
                   </div>
@@ -233,9 +262,9 @@ export default function Layout({ children, currentPageName }) {
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className={`group flex flex-1 items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition-colors sm:max-w-xl ${panelClasses}`}
+                className={`menu-surface group flex flex-1 items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] sm:max-w-xl ${panelClasses}`}
               >
-                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${isDarkMode ? "bg-white/8 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105 ${isDarkMode ? "bg-white/8 text-slate-300" : "bg-slate-100 text-slate-500"}`}>
                   <Search className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -257,7 +286,7 @@ export default function Layout({ children, currentPageName }) {
                 </Button>
                 <Link
                   to="/profile"
-                  className={`hidden items-center gap-3 rounded-[22px] border px-3 py-2 sm:flex ${panelClasses}`}
+                  className={`menu-surface hidden items-center gap-3 rounded-[22px] border px-3 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] sm:flex ${panelClasses}`}
                 >
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="" className="h-11 w-11 rounded-2xl object-cover" />
