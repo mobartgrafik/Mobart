@@ -22,6 +22,59 @@ import PriorityBadge from "@/components/orders/PriorityBadge";
 import { normalizeOrderPriority, normalizeOrderStatus } from "@/lib/orderValues";
 import { useAuth } from "@/lib/AuthContext";
 
+const DAILY_MOTTOS = [
+  "Dobre tempo robi się z małych domknięć.",
+  "Najpierw porządek, potem rozpęd.",
+  "Jedno dobrze zamknięte zlecenie napędza kolejne.",
+  "Spokój w produkcji zaczyna się od jasnych priorytetów.",
+  "Dziś wygrywa to, co dowiezione na czas.",
+  "Mniej chaosu, więcej gotowych tematów.",
+  "Rytm zespołu buduje się decyzją za decyzją.",
+  "Najkrótsza droga do wyniku to klarowny plan.",
+  "Dobrze ustawiony dzień robi miejsce na szybkie finish'e.",
+  "Każde zlecenie lubi konkretny następny krok.",
+  "Nie wszystko naraz, tylko to co naprawdę rusza produkcję.",
+  "Najlepszy przegląd dnia to ten, po którym od razu wiadomo co robić.",
+  "Gdy priorytety są czytelne, praca płynie lżej.",
+  "Dziś liczy się płynność, nie zamieszanie.",
+  "Dobra organizacja brzmi ciszej niż pośpiech, ale działa mocniej.",
+  "Najpierw to, co odblokowuje resztę.",
+  "Małe usprawnienia robią wielką różnicę pod koniec dnia.",
+  "W produkcji wygrywa przygotowanie, nie gaszenie pożarów.",
+  "Jeden uporządkowany ekran to kilka minut odzyskane przy każdym kliknięciu.",
+  "Domykanie tematów to też forma przyspieszania.",
+  "Dziś warto pchać rzeczy do przodu, nie w bok.",
+  "Najlepiej idzie to, co ma jasny status i termin.",
+  "Mocny dzień zaczyna się od dobrego widoku na całość.",
+  "Zespół działa szybciej, gdy system nie przeszkadza.",
+  "Najważniejsze zadania nie powinny chować się w tłumie.",
+  "Każdy gotowy etap daje więcej miejsca na kolejny.",
+  "Dobry workflow czuć po tym, że nic nie trzeba zgadywać.",
+  "Dziś mniej przełączania, więcej dowożenia.",
+  "Największy progres robią dobrze ustawione detale.",
+  "To dobry dzień, żeby skrócić drogę od zgłoszenia do realizacji.",
+  "Im prostszy start, tym szybsze tempo pracy.",
+  "Dobrze rozpisany dzień to mniej wracania do tych samych pytań.",
+  "Najpierw przejrzystość, potem dynamika.",
+  "Wszystko wygląda lżej, gdy statusy są pod ręką.",
+  "Dziś system ma prowadzić, a nie spowalniać.",
+  "To, co pilne, powinno być widoczne od razu.",
+  "Najwięcej czasu oszczędza to, czego nie trzeba drugi raz szukać.",
+  "Sprawny dzień to suma szybkich, prostych decyzji.",
+  "Dobra produkcja lubi rytm bardziej niż improwizację.",
+  "Dziś warto zamieniać otwarte tematy w gotowe realizacje.",
+  "Jedno kliknięcie mniej, jedno zadanie szybciej.",
+  "Praca nabiera tempa, gdy informacje są na swoim miejscu.",
+  "Najlepszy pulpit to taki, który od razu ustawia kierunek.",
+  "Każdy uporządkowany moduł oddaje czas zespołowi.",
+  "Dzisiaj działamy konkretem, nie domysłami.",
+  "Priorytet widoczny od razu to mniej przestojów później.",
+  "Dobry start dnia to połowa sprawnej realizacji.",
+  "Porządek w systemie robi spokój w zespole.",
+  "Najpierw rzeczy ważne, potem rzeczy głośne.",
+  "Ten dzień najlepiej wygląda w trybie: mniej tarcia, więcej efektu.",
+];
+
 function Surface({ children, className = "" }) {
   return (
     <div className={`rounded-[30px] border border-slate-200/80 bg-white/92 shadow-[0_24px_70px_-40px_rgba(15,23,42,0.28)] dark:border-white/10 dark:bg-white/[0.04] dark:shadow-none ${className}`}>
@@ -195,6 +248,11 @@ export default function Dashboard() {
   }, [orders]);
 
   const greetingName = authorLabel?.split(" ")?.[0] || authorLabel;
+  const mottoOfTheDay = useMemo(() => {
+    const today = new Date();
+    const dayKey = Math.floor(new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime() / 86400000);
+    return DAILY_MOTTOS[((dayKey % DAILY_MOTTOS.length) + DAILY_MOTTOS.length) % DAILY_MOTTOS.length];
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -206,10 +264,10 @@ export default function Dashboard() {
                 Pulpit startowy
               </div>
               <h1 className="mt-5 max-w-2xl text-4xl font-semibold leading-tight tracking-tight text-slate-950 dark:text-white md:text-5xl">
-                Cześć, {greetingName}. Zobacz, co dziś wymaga uwagi w produkcji.
+                Cześć, {greetingName}. {mottoOfTheDay}
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-slate-500 dark:text-slate-400">
-                Ten widok ma prowadzić do działania: nowe zlecenie, szybki wgląd w statusy i najbliższe terminy bez skakania po modułach.
+                Hasło dnia zmienia się codziennie, ale cel zostaje ten sam: szybki start, jasne priorytety i mniej skakania między modułami.
               </p>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -229,17 +287,17 @@ export default function Dashboard() {
             </div>
 
             <div className="flex flex-col justify-between gap-4">
-              <div className="rounded-[28px] bg-slate-950 p-5 text-white shadow-[0_28px_70px_-35px_rgba(15,23,42,0.8)] dark:bg-white dark:text-slate-950">
-                <p className="text-sm font-medium text-white/65 dark:text-slate-500">Rytm dnia</p>
+              <div className="rounded-[28px] border border-slate-200/70 bg-slate-100/95 p-5 text-slate-950 shadow-[0_28px_70px_-35px_rgba(15,23,42,0.22)] dark:border-white/10 dark:bg-[#101826] dark:text-white dark:shadow-[0_28px_70px_-35px_rgba(2,6,23,0.9)]">
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Rytm dnia</p>
                 <p className="mt-3 text-4xl font-semibold">{dashboardData.activeOrders.length}</p>
-                <p className="mt-2 text-sm text-white/70 dark:text-slate-500">aktywnych zleceń w obiegu</p>
+                <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">aktywnych zleceń w obiegu</p>
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white/10 p-3 dark:bg-slate-100">
-                    <p className="text-xs text-white/60 dark:text-slate-500">Do przekazania</p>
+                  <div className="rounded-2xl bg-white/75 p-3 dark:bg-white/5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Do przekazania</p>
                     <p className="mt-1 text-lg font-semibold">{dashboardData.handoffOrders.length}</p>
                   </div>
-                  <div className="rounded-2xl bg-white/10 p-3 dark:bg-slate-100">
-                    <p className="text-xs text-white/60 dark:text-slate-500">Pilne</p>
+                  <div className="rounded-2xl bg-white/75 p-3 dark:bg-white/5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Pilne</p>
                     <p className="mt-1 text-lg font-semibold">{dashboardData.urgentOrders.length}</p>
                   </div>
                 </div>
