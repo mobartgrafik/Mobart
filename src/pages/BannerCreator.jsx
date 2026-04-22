@@ -46,6 +46,7 @@ const BACKGROUNDS = [
 
 const FONTS = [
   "Impact",
+  "Arial Black",
   "Arial",
   "Trebuchet MS",
   "Verdana",
@@ -64,6 +65,7 @@ const TEMPLATES = [
       presetLabel: "Baner 100 × 200 cm",
       background: "#ffe100",
       panelStyle: "none",
+      layoutVariant: "classicSale",
       overlayOpacity: 0,
       align: "left",
       eyebrow: "",
@@ -77,13 +79,13 @@ const TEMPLATES = [
       headlineColor: "#111111",
       subtextColor: "#111111",
       accentColor: "#111111",
-      font: "Impact",
-      headlineSize: 152,
+      font: "Arial Black",
+      headlineSize: 138,
       subtextSize: 28,
-      contentWidth: 90,
-      padding: 5,
+      contentWidth: 100,
+      padding: 0,
       logoSize: 120,
-      phoneStyle: "badge",
+      phoneStyle: "classicSale",
     },
   },
   {
@@ -264,6 +266,7 @@ function StatTile({ label, value, tone = "default" }) {
 }
 
 function BannerArtwork({ config, width, height, logoUrl }) {
+  const isClassicSale = config.layoutVariant === "classicSale";
   const horizontalAlign = config.align === "center" ? "center" : config.align === "right" ? "flex-end" : "flex-start";
   const textAlign = config.align;
   const padding = Math.round(width * (config.padding / 100));
@@ -290,6 +293,101 @@ function BannerArtwork({ config, width, height, logoUrl }) {
   const panelShadow =
     config.panelStyle === "none" ? "none" : "0 30px 80px -45px rgba(15, 23, 42, 0.75)";
   const classicPhoneStyle = config.phoneStyle === "badge";
+
+  if (isClassicSale) {
+    const headlineTop = Math.round(height * 0.12);
+    const headlineLeft = Math.round(width * 0.07);
+    const phoneTop = Math.round(height * 0.57);
+    const phoneLeft = Math.round(width * 0.065);
+    const iconSize = Math.max(88, Math.round(width * 0.08));
+    const phoneFontSize = Math.max(52, Math.round(width * 0.058));
+
+    return (
+      <div
+        style={{
+          width,
+          height,
+          position: "relative",
+          overflow: "hidden",
+          background: "#ffe100",
+          color: "#111111",
+          fontFamily: '"Arial Black", Impact, sans-serif',
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "radial-gradient(circle at 86% 18%, rgba(17,17,17,0.16) 0%, rgba(17,17,17,0.08) 14%, rgba(255,225,0,0) 34%), radial-gradient(circle at 86% 74%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 16%, rgba(255,225,0,0) 34%)",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            left: headlineLeft,
+            top: headlineTop,
+            fontSize: config.headlineSize,
+            lineHeight: 0.88,
+            letterSpacing: "-0.08em",
+            fontWeight: 900,
+            color: "#111111",
+            textTransform: "uppercase",
+            textShadow: "0 10px 18px rgba(17,17,17,0.14)",
+            transform: "scaleY(1.02)",
+            transformOrigin: "left top",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {config.headline}
+        </div>
+
+        {config.showPhone && config.phoneNumber ? (
+          <div
+            style={{
+              position: "absolute",
+              left: phoneLeft,
+              top: phoneTop,
+              display: "flex",
+              alignItems: "center",
+              gap: Math.max(22, Math.round(width * 0.018)),
+              color: "#111111",
+            }}
+          >
+            <span
+              style={{
+                width: iconSize,
+                height: iconSize,
+                minWidth: iconSize,
+                borderRadius: "999px",
+                background: "#111111",
+                color: "#ffe100",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 10px 22px rgba(17,17,17,0.12)",
+              }}
+            >
+              <Phone size={Math.max(30, Math.round(width * 0.024))} strokeWidth={2.4} />
+            </span>
+            <span
+              style={{
+                fontSize: phoneFontSize,
+                lineHeight: 1,
+                letterSpacing: "-0.06em",
+                fontWeight: 900,
+                color: "#111111",
+                textShadow: "0 8px 16px rgba(17,17,17,0.1)",
+              }}
+            >
+              {config.phoneNumber}
+            </span>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div
