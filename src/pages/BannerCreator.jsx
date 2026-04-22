@@ -87,6 +87,8 @@ const TEMPLATES = [
       padding: 0,
       logoSize: 120,
       phoneStyle: "classicSale",
+      phoneTextSize: 66,
+      phoneIconSize: 108,
     },
   },
   {
@@ -117,6 +119,8 @@ const TEMPLATES = [
       padding: 7,
       logoSize: 120,
       phoneStyle: "pill",
+      phoneTextSize: 34,
+      phoneIconSize: 42,
     },
   },
   {
@@ -147,6 +151,8 @@ const TEMPLATES = [
       padding: 7,
       logoSize: 120,
       phoneStyle: "pill",
+      phoneTextSize: 34,
+      phoneIconSize: 42,
     },
   },
   {
@@ -177,6 +183,8 @@ const TEMPLATES = [
       padding: 8,
       logoSize: 110,
       phoneStyle: "pill",
+      phoneTextSize: 34,
+      phoneIconSize: 42,
     },
   },
   {
@@ -207,6 +215,8 @@ const TEMPLATES = [
       padding: 9,
       logoSize: 96,
       phoneStyle: "pill",
+      phoneTextSize: 32,
+      phoneIconSize: 40,
     },
   },
 ];
@@ -311,8 +321,8 @@ function BannerArtwork({ config, width, height, logoUrl }) {
     const headlineLeft = Math.round(width * 0.07);
     const phoneTop = Math.round(height * 0.61);
     const phoneLeft = Math.round(width * 0.07);
-    const iconSize = Math.max(84, Math.round(width * 0.075));
-    const phoneFontSize = Math.max(50, Math.round(width * 0.054));
+    const iconSize = config.phoneIconSize || Math.max(84, Math.round(width * 0.075));
+    const phoneFontSize = config.phoneTextSize || Math.max(50, Math.round(width * 0.054));
 
     return (
       <div
@@ -381,7 +391,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
                 boxShadow: "0 8px 18px rgba(17,17,17,0.1)",
               }}
             >
-              <SalePhoneIcon size={Math.max(32, Math.round(width * 0.026))} color="#ffe100" />
+              <SalePhoneIcon size={Math.max(32, Math.round(iconSize * 0.38))} color="#ffe100" />
             </span>
             <span
               style={{
@@ -598,27 +608,27 @@ function BannerArtwork({ config, width, height, logoUrl }) {
                       ? "1px solid rgba(15,23,42,0.12)"
                       : "1px solid rgba(255,255,255,0.12)",
                   color: config.headlineColor,
-                  fontSize: classicPhoneStyle ? Math.max(42, Math.round(config.headlineSize * 0.44)) : Math.max(20, Math.round(config.headlineSize * 0.28)),
+                  fontSize: config.phoneTextSize || (classicPhoneStyle ? Math.max(42, Math.round(config.headlineSize * 0.44)) : Math.max(20, Math.round(config.headlineSize * 0.28))),
                   fontWeight: 800,
                 }}
               >
                 <span
                   style={{
-                    width: classicPhoneStyle ? Math.max(86, Math.round(width * 0.09)) : "auto",
-                    height: classicPhoneStyle ? Math.max(86, Math.round(width * 0.09)) : "auto",
-                    minWidth: classicPhoneStyle ? Math.max(86, Math.round(width * 0.09)) : "auto",
+                    width: classicPhoneStyle ? config.phoneIconSize || Math.max(86, Math.round(width * 0.09)) : "auto",
+                    height: classicPhoneStyle ? config.phoneIconSize || Math.max(86, Math.round(width * 0.09)) : "auto",
+                    minWidth: classicPhoneStyle ? config.phoneIconSize || Math.max(86, Math.round(width * 0.09)) : "auto",
                     borderRadius: classicPhoneStyle ? "999px" : "0",
                     background: classicPhoneStyle ? "#111111" : "transparent",
                     color: classicPhoneStyle ? "#ffe100" : config.headlineColor,
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                  }}
-                >
-                  <Phone size={classicPhoneStyle ? Math.max(34, Math.round(width * 0.03)) : Math.max(20, Math.round(width * 0.02))} />
-                </span>
-                <span>{config.phoneNumber}</span>
-              </div>
+                    }}
+                  >
+                    <Phone size={config.phoneIconSize || (classicPhoneStyle ? Math.max(34, Math.round(width * 0.03)) : Math.max(20, Math.round(width * 0.02)))} />
+                  </span>
+                  <span>{config.phoneNumber}</span>
+                </div>
             ) : null}
           </div>
         </div>
@@ -655,6 +665,8 @@ export default function BannerCreator() {
   const [logoUrl, setLogoUrl] = useState("");
   const [logoSize, setLogoSize] = useState(DEFAULT_TEMPLATE.logoSize);
   const [phoneStyle, setPhoneStyle] = useState(DEFAULT_TEMPLATE.phoneStyle || "pill");
+  const [phoneTextSize, setPhoneTextSize] = useState(DEFAULT_TEMPLATE.phoneTextSize || 34);
+  const [phoneIconSize, setPhoneIconSize] = useState(DEFAULT_TEMPLATE.phoneIconSize || 42);
   const [contentWidth, setContentWidth] = useState(DEFAULT_TEMPLATE.contentWidth);
   const [padding, setPadding] = useState(DEFAULT_TEMPLATE.padding);
   const [exporting, setExporting] = useState(false);
@@ -689,6 +701,8 @@ export default function BannerCreator() {
     padding,
     logoSize,
     phoneStyle,
+    phoneTextSize,
+    phoneIconSize,
   };
 
   const presetSummary = `${width} × ${height}px`;
@@ -730,6 +744,8 @@ export default function BannerCreator() {
     setPadding(template.config.padding);
     setLogoSize(template.config.logoSize);
     setPhoneStyle(template.config.phoneStyle || "pill");
+    setPhoneTextSize(template.config.phoneTextSize || 34);
+    setPhoneIconSize(template.config.phoneIconSize || 42);
   };
 
   const resetCreator = () => {
@@ -760,6 +776,8 @@ export default function BannerCreator() {
     setPadding(DEFAULT_TEMPLATE.padding);
     setLogoSize(DEFAULT_TEMPLATE.logoSize);
     setPhoneStyle(DEFAULT_TEMPLATE.phoneStyle || "pill");
+    setPhoneTextSize(DEFAULT_TEMPLATE.phoneTextSize || 34);
+    setPhoneIconSize(DEFAULT_TEMPLATE.phoneIconSize || 42);
     setLogoUrl("");
   };
 
@@ -1048,6 +1066,18 @@ export default function BannerCreator() {
                   >
                     {showPhone ? "ON" : "OFF"}
                   </Button>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs text-slate-500">Rozmiar numeru</Label>
+                    <Slider value={[phoneTextSize]} onValueChange={([value]) => setPhoneTextSize(value)} min={22} max={90} step={1} className="flex-1" />
+                    <span className="w-10 text-right text-xs text-slate-400">{phoneTextSize}px</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Label className="text-xs text-slate-500">Rozmiar ikony</Label>
+                    <Slider value={[phoneIconSize]} onValueChange={([value]) => setPhoneIconSize(value)} min={24} max={140} step={1} className="flex-1" />
+                    <span className="w-10 text-right text-xs text-slate-400">{phoneIconSize}px</span>
+                  </div>
                 </div>
               </div>
 
