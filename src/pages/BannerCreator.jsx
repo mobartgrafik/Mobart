@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BadgePlus,
   Download,
@@ -79,8 +80,8 @@ const TEMPLATES = [
       headlineColor: "#111111",
       subtextColor: "#111111",
       accentColor: "#111111",
-      font: "Arial Black",
-      headlineSize: 138,
+      font: "Poppins",
+      headlineSize: 132,
       subtextSize: 28,
       contentWidth: 100,
       padding: 0,
@@ -217,6 +218,17 @@ const DEFAULT_TEMPLATE = {
 const MAX_PREVIEW_WIDTH = 760;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
+function SalePhoneIcon({ size = 34, color = "#ffe100" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M7.4 3.2c.5-.5 1.3-.5 1.8 0l2 2c.5.5.5 1.2.1 1.8l-1.2 1.4c-.2.2-.2.5-.1.7.8 1.6 2 2.9 3.7 3.7.2.1.5.1.7-.1l1.4-1.2c.6-.4 1.3-.4 1.8.1l2 2c.5.5.5 1.3 0 1.8l-1.4 1.4c-.8.8-2 .9-3 .4-2.7-1.3-5-3.1-6.9-5-1.9-1.9-3.7-4.2-5-6.9-.5-1-.3-2.2.4-3l1.4-1.4Z"
+        fill={color}
+      />
+    </svg>
+  );
+}
+
 function PresetTile({ active, title, meta, onClick }) {
   return (
     <button
@@ -295,12 +307,12 @@ function BannerArtwork({ config, width, height, logoUrl }) {
   const classicPhoneStyle = config.phoneStyle === "badge";
 
   if (isClassicSale) {
-    const headlineTop = Math.round(height * 0.12);
+    const headlineTop = Math.round(height * 0.14);
     const headlineLeft = Math.round(width * 0.07);
-    const phoneTop = Math.round(height * 0.57);
-    const phoneLeft = Math.round(width * 0.065);
-    const iconSize = Math.max(88, Math.round(width * 0.08));
-    const phoneFontSize = Math.max(52, Math.round(width * 0.058));
+    const phoneTop = Math.round(height * 0.61);
+    const phoneLeft = Math.round(width * 0.07);
+    const iconSize = Math.max(84, Math.round(width * 0.075));
+    const phoneFontSize = Math.max(50, Math.round(width * 0.054));
 
     return (
       <div
@@ -311,7 +323,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
           overflow: "hidden",
           background: "#ffe100",
           color: "#111111",
-          fontFamily: '"Arial Black", Impact, sans-serif',
+          fontFamily: `"${config.font}", sans-serif`,
         }}
       >
         <div
@@ -319,7 +331,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 86% 18%, rgba(17,17,17,0.16) 0%, rgba(17,17,17,0.08) 14%, rgba(255,225,0,0) 34%), radial-gradient(circle at 86% 74%, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.08) 16%, rgba(255,225,0,0) 34%)",
+              "radial-gradient(circle at 86% 18%, rgba(17,17,17,0.12) 0%, rgba(17,17,17,0.05) 14%, rgba(255,225,0,0) 36%), radial-gradient(circle at 88% 78%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 14%, rgba(255,225,0,0) 32%)",
           }}
         />
 
@@ -329,13 +341,13 @@ function BannerArtwork({ config, width, height, logoUrl }) {
             left: headlineLeft,
             top: headlineTop,
             fontSize: config.headlineSize,
-            lineHeight: 0.88,
-            letterSpacing: "-0.08em",
+            lineHeight: 0.86,
+            letterSpacing: "-0.085em",
             fontWeight: 900,
             color: "#111111",
             textTransform: "uppercase",
-            textShadow: "0 10px 18px rgba(17,17,17,0.14)",
-            transform: "scaleY(1.02)",
+            textShadow: "0 9px 16px rgba(17,17,17,0.12)",
+            transform: "scaleY(1.06)",
             transformOrigin: "left top",
             whiteSpace: "pre-wrap",
           }}
@@ -366,19 +378,19 @@ function BannerArtwork({ config, width, height, logoUrl }) {
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: "0 10px 22px rgba(17,17,17,0.12)",
+                boxShadow: "0 8px 18px rgba(17,17,17,0.1)",
               }}
             >
-              <Phone size={Math.max(30, Math.round(width * 0.024))} strokeWidth={2.4} />
+              <SalePhoneIcon size={Math.max(32, Math.round(width * 0.026))} color="#ffe100" />
             </span>
             <span
               style={{
                 fontSize: phoneFontSize,
                 lineHeight: 1,
-                letterSpacing: "-0.06em",
+                letterSpacing: "-0.075em",
                 fontWeight: 900,
                 color: "#111111",
-                textShadow: "0 8px 16px rgba(17,17,17,0.1)",
+                textShadow: "0 8px 14px rgba(17,17,17,0.08)",
               }}
             >
               {config.phoneNumber}
@@ -616,6 +628,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
 }
 
 export default function BannerCreator() {
+  const [activeEditorTab, setActiveEditorTab] = useState("format");
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [activeTemplateName, setActiveTemplateName] = useState(TEMPLATES[0].name);
   const [presetLabel, setPresetLabel] = useState(DEFAULT_TEMPLATE.presetLabel);
@@ -886,178 +899,96 @@ export default function BannerCreator() {
             </div>
           </div>
 
-          <div className="space-y-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-4">
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Format</Label>
-              <Select value={presetLabel} onValueChange={handlePresetChange}>
-                <SelectTrigger className="border-white/10 bg-white/[0.04] text-slate-100">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="border-white/10 bg-slate-950 text-slate-100">
-                  {PRESETS.map((item) => (
-                    <SelectItem key={item.label} value={item.label} className="focus:bg-white/10">
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <Input
-                  type="number"
-                  value={customW}
-                  onChange={(event) => {
-                    setCustomW(clamp(Number(event.target.value) || 100, 100, 4000));
-                    setPresetLabel(customPreset.label);
-                  }}
-                  className="border-white/10 bg-white/[0.04] text-slate-100"
-                  placeholder="Szerokość"
-                />
-                <Input
-                  type="number"
-                  value={customH}
-                  onChange={(event) => {
-                    setCustomH(clamp(Number(event.target.value) || 100, 100, 4000));
-                    setPresetLabel(customPreset.label);
-                  }}
-                  className="border-white/10 bg-white/[0.04] text-slate-100"
-                  placeholder="Wysokość"
-                />
-              </div>
-            </div>
+          <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="rounded-[26px] border border-white/10 bg-slate-950/35 p-4">
+            <TabsList className="grid h-auto w-full grid-cols-3 rounded-[18px] bg-white/[0.04] p-1">
+              <TabsTrigger value="format" className="rounded-[14px] py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
+                Format
+              </TabsTrigger>
+              <TabsTrigger value="content" className="rounded-[14px] py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
+                Treść
+              </TabsTrigger>
+              <TabsTrigger value="style" className="rounded-[14px] py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
+                Styl
+              </TabsTrigger>
+            </TabsList>
 
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Tło</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {BACKGROUNDS.map((item) => (
-                  <button
-                    key={item.value}
-                    type="button"
-                    title={item.label}
-                    onClick={() => setBackground(item.value)}
-                    className={`h-11 rounded-xl border-2 transition-all ${
-                      background === item.value ? "border-sky-400 scale-[0.96]" : "border-transparent hover:border-white/20"
-                    }`}
-                    style={{ background: item.value }}
-                  />
-                ))}
-              </div>
-              <div className="mt-3 flex items-center gap-3">
-                <Label className="text-xs text-slate-500">Przyciemnienie tła</Label>
-                <Slider value={[overlayOpacity]} onValueChange={([value]) => setOverlayOpacity(value)} min={0} max={40} step={1} className="flex-1" />
-                <span className="w-10 text-right text-xs text-slate-400">{overlayOpacity}%</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { value: "none", label: "Bez panelu" },
-                { value: "soft", label: "Soft" },
-                { value: "glass", label: "Glass" },
-                { value: "solid", label: "Solid" },
-              ].map((item) => (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => setPanelStyle(item.value)}
-                  className={`rounded-2xl border px-3 py-2 text-xs transition-all ${
-                    panelStyle === item.value
-                      ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
-                      : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-4">
-            <div className="flex items-center gap-2 text-white">
-              <Type className="h-4 w-4 text-sky-300" />
-              <p className="text-sm font-semibold">Treść i hierarchia</p>
-            </div>
-
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Eyebrow</Label>
-              <div className="flex gap-2">
-                <Input value={eyebrow} onChange={(event) => setEyebrow(event.target.value)} className="border-white/10 bg-white/[0.04] text-slate-100" />
-                <Button
-                  type="button"
-                  variant={showEyebrow ? "default" : "outline"}
-                  onClick={() => setShowEyebrow((current) => !current)}
-                  className={showEyebrow ? "bg-sky-600 text-white hover:bg-sky-700" : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"}
-                >
-                  {showEyebrow ? "ON" : "OFF"}
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Nagłówek</Label>
-              <Textarea
-                value={headline}
-                onChange={(event) => setHeadline(event.target.value)}
-                className="min-h-[110px] border-white/10 bg-white/[0.04] text-slate-100"
-              />
-              <div className="mt-3 flex items-center gap-3">
-                <Slider value={[headlineSize]} onValueChange={([value]) => setHeadlineSize(value)} min={34} max={180} step={2} className="flex-1" />
-                <span className="w-12 text-right text-xs text-slate-400">{headlineSize}px</span>
-                <input type="color" value={headlineColor} onChange={(event) => setHeadlineColor(event.target.value)} className="h-10 w-10 rounded-xl border-0 bg-transparent" />
-              </div>
-            </div>
-
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Podtytuł</Label>
-              <Textarea
-                value={subtext}
-                onChange={(event) => setSubtext(event.target.value)}
-                className="min-h-[110px] border-white/10 bg-white/[0.04] text-slate-100"
-              />
-              <div className="mt-3 flex items-center gap-3">
-                <Slider value={[subtextSize]} onValueChange={([value]) => setSubtextSize(value)} min={16} max={72} step={1} className="flex-1" />
-                <span className="w-12 text-right text-xs text-slate-400">{subtextSize}px</span>
-                <input type="color" value={subtextColor} onChange={(event) => setSubtextColor(event.target.value)} className="h-10 w-10 rounded-xl border-0 bg-transparent" />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4 rounded-[26px] border border-white/10 bg-slate-950/35 p-4">
-            <div className="flex items-center gap-2 text-white">
-              <LayoutTemplate className="h-4 w-4 text-sky-300" />
-              <p className="text-sm font-semibold">CTA, branding i układ</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+            <TabsContent value="format" className="space-y-4 pt-4">
               <div>
-                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Czcionka</Label>
-                <Select value={font} onValueChange={setFont}>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Format</Label>
+                <Select value={presetLabel} onValueChange={handlePresetChange}>
                   <SelectTrigger className="border-white/10 bg-white/[0.04] text-slate-100">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="border-white/10 bg-slate-950 text-slate-100">
-                    {FONTS.map((item) => (
-                      <SelectItem key={item} value={item} className="focus:bg-white/10" style={{ fontFamily: item }}>
-                        {item}
+                    {PRESETS.map((item) => (
+                      <SelectItem key={item.label} value={item.label} className="focus:bg-white/10">
+                        {item.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Input
+                    type="number"
+                    value={customW}
+                    onChange={(event) => {
+                      setCustomW(clamp(Number(event.target.value) || 100, 100, 4000));
+                      setPresetLabel(customPreset.label);
+                    }}
+                    className="border-white/10 bg-white/[0.04] text-slate-100"
+                    placeholder="Szerokość"
+                  />
+                  <Input
+                    type="number"
+                    value={customH}
+                    onChange={(event) => {
+                      setCustomH(clamp(Number(event.target.value) || 100, 100, 4000));
+                      setPresetLabel(customPreset.label);
+                    }}
+                    className="border-white/10 bg-white/[0.04] text-slate-100"
+                    placeholder="Wysokość"
+                  />
+                </div>
               </div>
 
               <div>
-                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Wyrównanie</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Tło</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {BACKGROUNDS.map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      title={item.label}
+                      onClick={() => setBackground(item.value)}
+                      className={`h-11 rounded-xl border-2 transition-all ${
+                        background === item.value ? "border-sky-400 scale-[0.96]" : "border-transparent hover:border-white/20"
+                      }`}
+                      style={{ background: item.value }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <Label className="text-xs text-slate-500">Przyciemnienie tła</Label>
+                  <Slider value={[overlayOpacity]} onValueChange={([value]) => setOverlayOpacity(value)} min={0} max={40} step={1} className="flex-1" />
+                  <span className="w-10 text-right text-xs text-slate-400">{overlayOpacity}%</span>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Typ panelu</Label>
+                <div className="grid grid-cols-4 gap-2">
                   {[
-                    { value: "left", label: "Lewa" },
-                    { value: "center", label: "Środek" },
-                    { value: "right", label: "Prawa" },
+                    { value: "none", label: "Bez" },
+                    { value: "soft", label: "Soft" },
+                    { value: "glass", label: "Glass" },
+                    { value: "solid", label: "Solid" },
                   ].map((item) => (
                     <button
                       key={item.value}
                       type="button"
-                      onClick={() => setAlign(item.value)}
+                      onClick={() => setPanelStyle(item.value)}
                       className={`rounded-2xl border px-3 py-2 text-xs transition-all ${
-                        align === item.value
+                        panelStyle === item.value
                           ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
                           : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
                       }`}
@@ -1067,85 +998,166 @@ export default function BannerCreator() {
                   ))}
                 </div>
               </div>
-            </div>
+            </TabsContent>
 
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">CTA</Label>
-              <div className="flex gap-2">
-                <Input value={cta} onChange={(event) => setCta(event.target.value)} className="border-white/10 bg-white/[0.04] text-slate-100" />
-                <Button
-                  type="button"
-                  variant={showCta ? "default" : "outline"}
-                  onClick={() => setShowCta((current) => !current)}
-                  className={showCta ? "bg-sky-600 text-white hover:bg-sky-700" : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"}
-                >
-                  {showCta ? "ON" : "OFF"}
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Telefon</Label>
-              <div className="flex gap-2">
-                <Input value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} className="border-white/10 bg-white/[0.04] text-slate-100" />
-                <Button
-                  type="button"
-                  variant={showPhone ? "default" : "outline"}
-                  onClick={() => setShowPhone((current) => !current)}
-                  className={showPhone ? "bg-sky-600 text-white hover:bg-sky-700" : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"}
-                >
-                  {showPhone ? "ON" : "OFF"}
-                </Button>
-              </div>
-            </div>
-
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Logo / grafika</Label>
-              <label className="flex cursor-pointer items-center gap-2 rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 transition-colors hover:bg-white/[0.05]">
-                <ImageIcon className="h-4 w-4 text-sky-300" />
-                {logoUrl ? "Podmień logo" : "Dodaj logo PNG / JPG"}
-                <input type="file" accept="image/*" className="hidden" onChange={handleLogoFile} />
-              </label>
-              {logoUrl ? (
-                <div className="mt-3 flex items-center gap-3">
-                  <Slider value={[logoSize]} onValueChange={([value]) => setLogoSize(value)} min={50} max={260} step={2} className="flex-1" />
-                  <span className="w-12 text-right text-xs text-slate-400">{logoSize}px</span>
-                  <Button type="button" variant="ghost" onClick={() => setLogoUrl("")} className="text-rose-300 hover:bg-rose-500/10 hover:text-rose-200">
-                    Usuń
+            <TabsContent value="content" className="space-y-4 pt-4">
+              <div>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Eyebrow</Label>
+                <div className="flex gap-2">
+                  <Input value={eyebrow} onChange={(event) => setEyebrow(event.target.value)} className="border-white/10 bg-white/[0.04] text-slate-100" />
+                  <Button
+                    type="button"
+                    variant={showEyebrow ? "default" : "outline"}
+                    onClick={() => setShowEyebrow((current) => !current)}
+                    className={showEyebrow ? "bg-sky-600 text-white hover:bg-sky-700" : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"}
+                  >
+                    {showEyebrow ? "ON" : "OFF"}
                   </Button>
                 </div>
-              ) : null}
-            </div>
+              </div>
 
-            <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Kolor akcentu</Label>
-                <div className="flex items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-2">
-                  <Palette className="h-4 w-4 text-sky-300" />
-                  <input type="color" value={accentColor} onChange={(event) => setAccentColor(event.target.value)} className="h-10 w-full rounded-xl border-0 bg-transparent" />
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Nagłówek</Label>
+                <Textarea value={headline} onChange={(event) => setHeadline(event.target.value)} className="min-h-[110px] border-white/10 bg-white/[0.04] text-slate-100" />
+                <div className="mt-3 flex items-center gap-3">
+                  <Slider value={[headlineSize]} onValueChange={([value]) => setHeadlineSize(value)} min={34} max={180} step={2} className="flex-1" />
+                  <span className="w-12 text-right text-xs text-slate-400">{headlineSize}px</span>
+                  <input type="color" value={headlineColor} onChange={(event) => setHeadlineColor(event.target.value)} className="h-10 w-10 rounded-xl border-0 bg-transparent" />
                 </div>
               </div>
 
               <div>
-                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Szerokość treści</Label>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Podtytuł</Label>
+                <Textarea value={subtext} onChange={(event) => setSubtext(event.target.value)} className="min-h-[110px] border-white/10 bg-white/[0.04] text-slate-100" />
+                <div className="mt-3 flex items-center gap-3">
+                  <Slider value={[subtextSize]} onValueChange={([value]) => setSubtextSize(value)} min={16} max={72} step={1} className="flex-1" />
+                  <span className="w-12 text-right text-xs text-slate-400">{subtextSize}px</span>
+                  <input type="color" value={subtextColor} onChange={(event) => setSubtextColor(event.target.value)} className="h-10 w-10 rounded-xl border-0 bg-transparent" />
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Telefon</Label>
+                <div className="flex gap-2">
+                  <Input value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} className="border-white/10 bg-white/[0.04] text-slate-100" />
+                  <Button
+                    type="button"
+                    variant={showPhone ? "default" : "outline"}
+                    onClick={() => setShowPhone((current) => !current)}
+                    className={showPhone ? "bg-sky-600 text-white hover:bg-sky-700" : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"}
+                  >
+                    {showPhone ? "ON" : "OFF"}
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">CTA</Label>
+                <div className="flex gap-2">
+                  <Input value={cta} onChange={(event) => setCta(event.target.value)} className="border-white/10 bg-white/[0.04] text-slate-100" />
+                  <Button
+                    type="button"
+                    variant={showCta ? "default" : "outline"}
+                    onClick={() => setShowCta((current) => !current)}
+                    className={showCta ? "bg-sky-600 text-white hover:bg-sky-700" : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]"}
+                  >
+                    {showCta ? "ON" : "OFF"}
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="style" className="space-y-4 pt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Czcionka</Label>
+                  <Select value={font} onValueChange={setFont}>
+                    <SelectTrigger className="border-white/10 bg-white/[0.04] text-slate-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="border-white/10 bg-slate-950 text-slate-100">
+                      {FONTS.map((item) => (
+                        <SelectItem key={item} value={item} className="focus:bg-white/10" style={{ fontFamily: item }}>
+                          {item}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Wyrównanie</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: "left", label: "Lewa" },
+                      { value: "center", label: "Środek" },
+                      { value: "right", label: "Prawa" },
+                    ].map((item) => (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => setAlign(item.value)}
+                        className={`rounded-2xl border px-3 py-2 text-xs transition-all ${
+                          align === item.value
+                            ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
+                            : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Logo / grafika</Label>
+                <label className="flex cursor-pointer items-center gap-2 rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 transition-colors hover:bg-white/[0.05]">
+                  <ImageIcon className="h-4 w-4 text-sky-300" />
+                  {logoUrl ? "Podmień logo" : "Dodaj logo PNG / JPG"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoFile} />
+                </label>
+                {logoUrl ? (
+                  <div className="mt-3 flex items-center gap-3">
+                    <Slider value={[logoSize]} onValueChange={([value]) => setLogoSize(value)} min={50} max={260} step={2} className="flex-1" />
+                    <span className="w-12 text-right text-xs text-slate-400">{logoSize}px</span>
+                    <Button type="button" variant="ghost" onClick={() => setLogoUrl("")} className="text-rose-300 hover:bg-rose-500/10 hover:text-rose-200">
+                      Usuń
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Kolor akcentu</Label>
+                  <div className="flex items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-2">
+                    <Palette className="h-4 w-4 text-sky-300" />
+                    <input type="color" value={accentColor} onChange={(event) => setAccentColor(event.target.value)} className="h-10 w-full rounded-xl border-0 bg-transparent" />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Szerokość treści</Label>
+                  <div className="flex items-center gap-3">
+                    <Slider value={[contentWidth]} onValueChange={([value]) => setContentWidth(value)} min={40} max={100} step={1} className="flex-1" />
+                    <span className="w-12 text-right text-xs text-slate-400">{contentWidth}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Margines wewnętrzny</Label>
                 <div className="flex items-center gap-3">
-                  <Slider value={[contentWidth]} onValueChange={([value]) => setContentWidth(value)} min={40} max={90} step={1} className="flex-1" />
-                  <span className="w-12 text-right text-xs text-slate-400">{contentWidth}%</span>
+                  <Slider value={[padding]} onValueChange={([value]) => setPadding(value)} min={0} max={14} step={1} className="flex-1" />
+                  <span className="w-12 text-right text-xs text-slate-400">{padding}%</span>
                 </div>
               </div>
-            </div>
-
-            <div>
-              <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Margines wewnętrzny</Label>
-              <div className="flex items-center gap-3">
-                <Slider value={[padding]} onValueChange={([value]) => setPadding(value)} min={4} max={14} step={1} className="flex-1" />
-                <span className="w-12 text-right text-xs text-slate-400">{padding}%</span>
-              </div>
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 xl:sticky xl:top-6 xl:self-start">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-[28px] border border-white/10 bg-white/[0.03] px-5 py-4">
             <div>
               <p className="text-sm font-semibold text-white">Podgląd live</p>
