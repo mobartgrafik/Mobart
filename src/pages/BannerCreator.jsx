@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -11,6 +12,7 @@ import {
   Download,
   Image as ImageIcon,
   LayoutTemplate,
+  Layers3,
   Phone,
   Palette,
   RefreshCw,
@@ -213,6 +215,22 @@ function PresetTile({ active, title, meta, onClick }) {
     >
       <p className="text-sm font-semibold">{title}</p>
       <p className="mt-1 text-xs text-inherit/70">{meta}</p>
+    </button>
+  );
+}
+
+function TemplateCard({ template, onApply }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onApply(template.name)}
+      className="group overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] text-left transition-all duration-200 hover:border-sky-400/30 hover:bg-white/[0.05]"
+    >
+      <div className="h-28" style={{ background: template.previewBg }} />
+      <div className="space-y-1 px-4 py-4">
+        <p className="text-sm font-semibold text-white">{template.name}</p>
+        <p className="text-xs leading-5 text-slate-400">{template.description}</p>
+      </div>
     </button>
   );
 }
@@ -464,6 +482,8 @@ function BannerArtwork({ config, width, height, logoUrl }) {
 }
 
 export default function BannerCreator() {
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
+  const [activeTemplateName, setActiveTemplateName] = useState("Własny układ");
   const [presetLabel, setPresetLabel] = useState(DEFAULT_TEMPLATE.presetLabel);
   const [customW, setCustomW] = useState(1200);
   const [customH, setCustomH] = useState(600);
@@ -524,10 +544,13 @@ export default function BannerCreator() {
 
   const presetSummary = `${width} × ${height}px`;
   const visualDensity = headline.length > 42 ? "bardziej tekstowy" : showPhone || showCta ? "sprzedażowy" : "minimalny";
+  const activeTemplate = TEMPLATES.find((item) => item.name === activeTemplateName);
 
   const applyTemplate = (templateName) => {
     const template = TEMPLATES.find((item) => item.name === templateName);
     if (!template) return;
+    setActiveTemplateName(template.name);
+    setTemplatePickerOpen(false);
 
     const nextPreset = PRESETS.find((item) => item.label === template.config.presetLabel) || PRESETS[0];
     setPresetLabel(nextPreset.label);
@@ -560,6 +583,8 @@ export default function BannerCreator() {
   };
 
   const resetCreator = () => {
+    setActiveTemplateName("Własny układ");
+    setTemplatePickerOpen(false);
     setPresetLabel(DEFAULT_TEMPLATE.presetLabel);
     setCustomW(1200);
     setCustomH(600);
@@ -669,23 +694,57 @@ export default function BannerCreator() {
             </Button>
           </div>
 
-          <div className="space-y-3">
-            <Label className="text-xs uppercase tracking-[0.22em] text-slate-500">Szybki start</Label>
-            <div className="grid gap-3">
-              {TEMPLATES.map((template) => (
-                <button
-                  key={template.name}
-                  type="button"
-                  onClick={() => applyTemplate(template.name)}
-                  className="group overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] text-left transition-all duration-200 hover:border-sky-400/30 hover:bg-white/[0.05]"
-                >
-                  <div className="h-24" style={{ background: template.previewBg }} />
-                  <div className="space-y-1 px-4 py-3">
-                    <p className="text-sm font-semibold text-white">{template.name}</p>
-                    <p className="text-xs leading-5 text-slate-400">{template.description}</p>
+          <div className="rounded-[26px] border border-white/10 bg-slate-950/35 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <Label className="text-xs uppercase tracking-[0.22em] text-slate-500">System szablonów</Label>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {activeTemplate ? activeTemplate.name : "Własny układ"}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  {activeTemplate
+                    ? activeTemplate.description
+                    : "Tworzysz banner od zera z pełnym sterowaniem układem, CTA i brandingiem."}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-2 text-sky-200">
+                <Layers3 className="h-4 w-4" />
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Dialog open={templatePickerOpen} onOpenChange={setTemplatePickerOpen}>
+                <DialogTrigger asChild>
+                  <Button type="button" className="gap-2 bg-sky-600 text-white hover:bg-sky-700">
+                    <LayoutTemplate className="h-4 w-4" />
+                    Wybierz szablon
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl border-white/10 bg-slate-950 text-slate-100">
+                  <DialogHeader>
+                    <DialogTitle>Szablony banerów</DialogTitle>
+                    <DialogDescription className="text-slate-400">
+                      Wybierz punkt startowy i dopracuj go dalej w edytorze po lewej stronie.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 pt-2 sm:grid-cols-2">
+                    {TEMPLATES.map((template) => (
+                      <TemplateCard key={template.name} template={template} onApply={applyTemplate} />
+                    ))}
                   </div>
-                </button>
-              ))}
+                </DialogContent>
+              </Dialog>
+
+              {activeTemplate ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTemplateName("Własny układ")}
+                  className="border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"
+                >
+                  Przejdź na własny układ
+                </Button>
+              ) : null}
             </div>
           </div>
 
