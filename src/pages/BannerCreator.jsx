@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BadgePlus,
   Download,
   Image as ImageIcon,
   LayoutTemplate,
@@ -18,7 +17,6 @@ import {
   Palette,
   RefreshCw,
   Sparkles,
-  Type,
 } from "lucide-react";
 
 const PRESETS = [

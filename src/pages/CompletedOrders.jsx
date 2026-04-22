@@ -3,7 +3,7 @@ import { supabase } from "@/supabase";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, RotateCcw, ArchiveX } from "lucide-react";
+import { Search, ArchiveX } from "lucide-react";
 import OrdersTable from "@/components/orders/OrdersTable";
 import OrderPreviewDialog from "@/components/orders/OrderPreviewDialog";
 import { createPageUrl } from "@/utils";
