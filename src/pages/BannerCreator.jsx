@@ -57,6 +57,36 @@ const FONTS = [
 
 const TEMPLATES = [
   {
+    name: "Klasyczny sprzedam",
+    description: "Startowy układ tablicowy: żółte tło, wielki nagłówek i mocny numer telefonu.",
+    previewBg: "#ffe100",
+    config: {
+      presetLabel: "Baner 100 × 200 cm",
+      background: "#ffe100",
+      panelStyle: "none",
+      overlayOpacity: 0,
+      align: "left",
+      eyebrow: "",
+      headline: "SPRZEDAM",
+      subtext: "",
+      cta: "",
+      phoneNumber: "600 265 203",
+      showPhone: true,
+      showCta: false,
+      showEyebrow: false,
+      headlineColor: "#111111",
+      subtextColor: "#111111",
+      accentColor: "#111111",
+      font: "Impact",
+      headlineSize: 152,
+      subtextSize: 28,
+      contentWidth: 90,
+      padding: 5,
+      logoSize: 120,
+      phoneStyle: "badge",
+    },
+  },
+  {
     name: "Nieruchomość",
     description: "Mocny komunikat sprzedażowy z numerem telefonu i jasnym CTA.",
     previewBg: "linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)",
@@ -83,6 +113,7 @@ const TEMPLATES = [
       contentWidth: 70,
       padding: 7,
       logoSize: 120,
+      phoneStyle: "pill",
     },
   },
   {
@@ -112,6 +143,7 @@ const TEMPLATES = [
       contentWidth: 62,
       padding: 7,
       logoSize: 120,
+      phoneStyle: "pill",
     },
   },
   {
@@ -141,6 +173,7 @@ const TEMPLATES = [
       contentWidth: 60,
       padding: 8,
       logoSize: 110,
+      phoneStyle: "pill",
     },
   },
   {
@@ -170,33 +203,13 @@ const TEMPLATES = [
       contentWidth: 66,
       padding: 9,
       logoSize: 96,
+      phoneStyle: "pill",
     },
   },
 ];
 
 const DEFAULT_TEMPLATE = {
-  presetLabel: PRESETS[0].label,
-  background: BACKGROUNDS[0].value,
-  panelStyle: "glass",
-  overlayOpacity: 14,
-  align: "left",
-  eyebrow: "MOCNY PRZEKAZ REKLAMOWY",
-  headline: "TWÓJ TEKST GŁÓWNY",
-  subtext: "Podtytuł, slogan lub kilka zdań, które dopowiadają ofertę i kierują uwagę klienta.",
-  cta: "Skontaktuj się teraz",
-  phoneNumber: "123 456 789",
-  showPhone: true,
-  showCta: true,
-  showEyebrow: true,
-  headlineColor: "#ffffff",
-  subtextColor: "#e2e8f0",
-  accentColor: "#38bdf8",
-  font: "Impact",
-  headlineSize: 92,
-  subtextSize: 28,
-  contentWidth: 62,
-  padding: 8,
-  logoSize: 110,
+  ...TEMPLATES[0].config,
 };
 
 const MAX_PREVIEW_WIDTH = 760;
@@ -276,6 +289,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
 
   const panelShadow =
     config.panelStyle === "none" ? "none" : "0 30px 80px -45px rgba(15, 23, 42, 0.75)";
+  const classicPhoneStyle = config.phoneStyle === "badge";
 
   return (
     <div
@@ -461,16 +475,38 @@ function BannerArtwork({ config, width, height, logoUrl }) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 12,
-                  padding: `${Math.max(12, Math.round(height * 0.012))}px ${Math.max(16, Math.round(width * 0.018))}px`,
-                  borderRadius: 999,
-                  background: config.panelStyle === "solid" ? "rgba(15,23,42,0.06)" : "rgba(255,255,255,0.12)",
-                  border: config.panelStyle === "solid" ? "1px solid rgba(15,23,42,0.12)" : "1px solid rgba(255,255,255,0.12)",
+                  padding: classicPhoneStyle ? "0" : `${Math.max(12, Math.round(height * 0.012))}px ${Math.max(16, Math.round(width * 0.018))}px`,
+                  borderRadius: classicPhoneStyle ? "0" : 999,
+                  background: classicPhoneStyle
+                    ? "transparent"
+                    : config.panelStyle === "solid"
+                      ? "rgba(15,23,42,0.06)"
+                      : "rgba(255,255,255,0.12)",
+                  border: classicPhoneStyle
+                    ? "0"
+                    : config.panelStyle === "solid"
+                      ? "1px solid rgba(15,23,42,0.12)"
+                      : "1px solid rgba(255,255,255,0.12)",
                   color: config.headlineColor,
-                  fontSize: Math.max(20, Math.round(config.headlineSize * 0.28)),
+                  fontSize: classicPhoneStyle ? Math.max(42, Math.round(config.headlineSize * 0.44)) : Math.max(20, Math.round(config.headlineSize * 0.28)),
                   fontWeight: 800,
                 }}
               >
-                <Phone size={Math.max(20, Math.round(width * 0.02))} />
+                <span
+                  style={{
+                    width: classicPhoneStyle ? Math.max(86, Math.round(width * 0.09)) : "auto",
+                    height: classicPhoneStyle ? Math.max(86, Math.round(width * 0.09)) : "auto",
+                    minWidth: classicPhoneStyle ? Math.max(86, Math.round(width * 0.09)) : "auto",
+                    borderRadius: classicPhoneStyle ? "999px" : "0",
+                    background: classicPhoneStyle ? "#111111" : "transparent",
+                    color: classicPhoneStyle ? "#ffe100" : config.headlineColor,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Phone size={classicPhoneStyle ? Math.max(34, Math.round(width * 0.03)) : Math.max(20, Math.round(width * 0.02))} />
+                </span>
                 <span>{config.phoneNumber}</span>
               </div>
             ) : null}
@@ -483,7 +519,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
 
 export default function BannerCreator() {
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
-  const [activeTemplateName, setActiveTemplateName] = useState("Własny układ");
+  const [activeTemplateName, setActiveTemplateName] = useState(TEMPLATES[0].name);
   const [presetLabel, setPresetLabel] = useState(DEFAULT_TEMPLATE.presetLabel);
   const [customW, setCustomW] = useState(1200);
   const [customH, setCustomH] = useState(600);
@@ -507,6 +543,7 @@ export default function BannerCreator() {
   const [align, setAlign] = useState(DEFAULT_TEMPLATE.align);
   const [logoUrl, setLogoUrl] = useState("");
   const [logoSize, setLogoSize] = useState(DEFAULT_TEMPLATE.logoSize);
+  const [phoneStyle, setPhoneStyle] = useState(DEFAULT_TEMPLATE.phoneStyle || "pill");
   const [contentWidth, setContentWidth] = useState(DEFAULT_TEMPLATE.contentWidth);
   const [padding, setPadding] = useState(DEFAULT_TEMPLATE.padding);
   const [exporting, setExporting] = useState(false);
@@ -540,6 +577,7 @@ export default function BannerCreator() {
     contentWidth,
     padding,
     logoSize,
+    phoneStyle,
   };
 
   const presetSummary = `${width} × ${height}px`;
@@ -580,10 +618,11 @@ export default function BannerCreator() {
     setContentWidth(template.config.contentWidth);
     setPadding(template.config.padding);
     setLogoSize(template.config.logoSize);
+    setPhoneStyle(template.config.phoneStyle || "pill");
   };
 
   const resetCreator = () => {
-    setActiveTemplateName("Własny układ");
+    setActiveTemplateName(TEMPLATES[0].name);
     setTemplatePickerOpen(false);
     setPresetLabel(DEFAULT_TEMPLATE.presetLabel);
     setCustomW(1200);
@@ -609,6 +648,7 @@ export default function BannerCreator() {
     setContentWidth(DEFAULT_TEMPLATE.contentWidth);
     setPadding(DEFAULT_TEMPLATE.padding);
     setLogoSize(DEFAULT_TEMPLATE.logoSize);
+    setPhoneStyle(DEFAULT_TEMPLATE.phoneStyle || "pill");
     setLogoUrl("");
   };
 
