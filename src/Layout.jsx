@@ -116,29 +116,30 @@ export default function Layout({ children, currentPageName }) {
   );
 
   const shellClasses = isDarkMode
-    ? "bg-[#08111f] text-slate-100"
-    : "bg-[#edf2f7] text-slate-900";
+    ? "text-slate-100"
+    : "text-slate-900";
   const frameClasses = isDarkMode
-    ? "border-white/10 bg-white/[0.03] shadow-[0_30px_120px_-40px_rgba(8,15,31,0.95)]"
-    : "border-white/80 bg-white/75 shadow-[0_35px_90px_-40px_rgba(15,23,42,0.28)]";
+    ? "glass-surface border-white/[0.12] bg-white/[0.055] shadow-[0_34px_120px_-48px_rgba(0,0,0,0.92)]"
+    : "glass-surface border-white/70 bg-white/[0.62] shadow-[0_35px_90px_-42px_rgba(15,23,42,0.34)]";
   const sidebarClasses = isDarkMode
-    ? "border-white/10 bg-white/[0.04]"
-    : "border-slate-200/80 bg-white/85";
+    ? "glass-surface border-white/[0.12] bg-white/[0.06]"
+    : "glass-surface border-white/70 bg-white/[0.68]";
   const headerClasses = isDarkMode
-    ? "border-white/10 bg-white/[0.02]"
-    : "border-slate-200/80 bg-white/70";
+    ? "border-white/10 bg-slate-950/[0.18] backdrop-blur-2xl"
+    : "border-white/60 bg-white/[0.38] backdrop-blur-2xl";
   const panelClasses = isDarkMode
-    ? "border-white/10 bg-white/[0.04]"
-    : "border-slate-200/80 bg-white/90";
+    ? "glass-surface border-white/[0.12] bg-white/[0.065]"
+    : "glass-surface border-white/70 bg-white/[0.62]";
   const quickStatClasses = isDarkMode
-    ? "border-white/10 bg-white/[0.045] text-slate-300"
-    : "border-white/80 bg-white/80 text-slate-700";
+    ? "glass-control border-white/[0.12] bg-white/[0.07] text-slate-300"
+    : "glass-control border-white/70 bg-white/[0.58] text-slate-700";
 
   return (
     <div className={`min-h-screen ${shellClasses}`}>
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className={`ambient-orb ambient-orb-slow absolute left-[-10%] top-[-15%] h-[28rem] w-[28rem] rounded-full blur-3xl ${isDarkMode ? "bg-cyan-500/16" : "bg-sky-300/30"}`} />
-        <div className={`ambient-orb ambient-orb-fast absolute bottom-[-12%] right-[-8%] h-[24rem] w-[24rem] rounded-full blur-3xl ${isDarkMode ? "bg-blue-500/18" : "bg-indigo-200/45"}`} />
+      <div className="pointer-events-none fixed inset-0 overflow-hidden opacity-80">
+        <div className={`absolute inset-x-0 top-0 h-40 ${isDarkMode ? "bg-gradient-to-b from-cyan-300/10 to-transparent" : "bg-gradient-to-b from-white/85 to-transparent"}`} />
+        <div className={`absolute inset-y-0 left-0 w-px ${isDarkMode ? "bg-white/10" : "bg-white/70"}`} />
+        <div className={`absolute inset-y-0 right-0 w-px ${isDarkMode ? "bg-white/10" : "bg-white/70"}`} />
       </div>
 
       {sidebarOpen && (
@@ -146,7 +147,7 @@ export default function Layout({ children, currentPageName }) {
       )}
 
       <div className="relative mx-auto flex min-h-screen max-w-[1680px] p-3 lg:p-5">
-        <div className={`flex w-full overflow-hidden rounded-[32px] border backdrop-blur-2xl ${frameClasses}`}>
+        <div className={`flex w-full overflow-hidden rounded-[32px] border backdrop-blur-3xl ${frameClasses}`}>
           <aside
             className={`menu-surface fixed inset-y-3 left-3 z-50 flex w-[310px] max-w-[calc(100vw-1.5rem)] flex-col rounded-[28px] border p-4 transition-transform duration-500 ease-out lg:static lg:inset-auto lg:h-auto lg:w-[300px] lg:max-w-none lg:translate-x-0 ${sidebarClasses} ${
               sidebarOpen ? "translate-x-0" : "-translate-x-[110%]"
