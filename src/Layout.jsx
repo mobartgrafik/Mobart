@@ -45,6 +45,19 @@ const NAV_SECTIONS = [
   },
 ];
 
+const GLASS_REACTIVE_SELECTOR = [
+  ".glass-surface",
+  ".glass-control",
+  ".menu-surface",
+  ".menu-link",
+  "button",
+  "a",
+  "[class*='bg-zinc-9']",
+  "[class*='bg-zinc-8']",
+  "[class*='bg-white/[0.0']",
+  "[class*='bg-slate-50/80']",
+].join(", ");
+
 function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
   const baseClasses = isDarkMode
     ? "text-slate-300 hover:text-white hover:bg-white/10"
@@ -103,6 +116,74 @@ export default function Layout({ children, currentPageName }) {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    let activeElement = null;
+    let frameId = 0;
+    let latestEvent = null;
+
+    const clearActiveElement = () => {
+      if (!activeElement) return;
+      activeElement.classList.remove("glass-hotspot");
+      activeElement.removeAttribute("data-glass-active");
+      activeElement.style.removeProperty("--glass-x");
+      activeElement.style.removeProperty("--glass-y");
+      activeElement.style.removeProperty("--glass-hotspot-size");
+      activeElement = null;
+    };
+
+    const updateHighlight = () => {
+      frameId = 0;
+      if (!latestEvent || !(latestEvent.target instanceof Element)) return;
+
+      const nextElement = latestEvent.target.closest(GLASS_REACTIVE_SELECTOR);
+      if (!(nextElement instanceof HTMLElement) || nextElement === document.body) {
+        clearActiveElement();
+        return;
+      }
+
+      if (activeElement !== nextElement) {
+        clearActiveElement();
+        activeElement = nextElement;
+        activeElement.classList.add("glass-hotspot");
+      }
+
+      const rect = activeElement.getBoundingClientRect();
+      if (!rect.width || !rect.height) {
+        clearActiveElement();
+        return;
+      }
+
+      const x = ((latestEvent.clientX - rect.left) / rect.width) * 100;
+      const y = ((latestEvent.clientY - rect.top) / rect.height) * 100;
+      const hotspotSize = Math.min(Math.max(Math.max(rect.width, rect.height) * 0.85, 130), 420);
+
+      activeElement.style.setProperty("--glass-x", `${x}%`);
+      activeElement.style.setProperty("--glass-y", `${y}%`);
+      activeElement.style.setProperty("--glass-hotspot-size", `${hotspotSize}px`);
+      activeElement.setAttribute("data-glass-active", "true");
+    };
+
+    const handlePointerMove = (event) => {
+      if (event.pointerType === "touch") return;
+      latestEvent = event;
+      if (!frameId) {
+        frameId = window.requestAnimationFrame(updateHighlight);
+      }
+    };
+
+    document.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.addEventListener("pointerleave", clearActiveElement);
+    window.addEventListener("blur", clearActiveElement);
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerleave", clearActiveElement);
+      window.removeEventListener("blur", clearActiveElement);
+      clearActiveElement();
+    };
   }, []);
 
   const isDarkMode = !mounted || theme !== "light";
