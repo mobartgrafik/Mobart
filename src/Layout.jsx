@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { createPageUrl } from "@/utils";
 import {
   Archive,
+  Check,
   FileText,
   History,
   Image,
@@ -11,6 +12,7 @@ import {
   LogOut,
   Menu,
   Moon,
+  Palette,
   Printer,
   Search,
   Settings2,
@@ -23,6 +25,7 @@ import {
 import GlobalSearch from "@/components/GlobalSearch";
 import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const NAV_SECTIONS = [
   {
@@ -53,19 +56,32 @@ const GLASS_REACTIVE_SELECTOR = [
   "[data-glass-reactive='true']",
 ].join(", ");
 
+const ACCENT_THEME_STORAGE_KEY = "gcrm-accent-theme";
+const DEFAULT_ACCENT_THEME = "sky";
+const THEME_ACCENTS = [
+  { id: "sky", label: "Niebo", rgb: "14 165 233", rgb2: "99 102 241" },
+  { id: "blue", label: "Niebieski", rgb: "37 99 235", rgb2: "59 130 246" },
+  { id: "cyan", label: "Cyan", rgb: "6 182 212", rgb2: "14 165 233" },
+  { id: "emerald", label: "Szmaragd", rgb: "16 185 129", rgb2: "20 184 166" },
+  { id: "lime", label: "Limonka", rgb: "132 204 22", rgb2: "34 197 94" },
+  { id: "amber", label: "Bursztyn", rgb: "245 158 11", rgb2: "234 179 8" },
+  { id: "orange", label: "Pomarańcz", rgb: "249 115 22", rgb2: "245 158 11" },
+  { id: "rose", label: "Róż", rgb: "244 63 94", rgb2: "236 72 153" },
+  { id: "violet", label: "Fiolet", rgb: "139 92 246", rgb2: "168 85 247" },
+  { id: "graphite", label: "Grafit", rgb: "100 116 139", rgb2: "51 65 85" },
+];
+
 function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
   const baseClasses = isDarkMode
     ? "text-slate-300 hover:text-white hover:bg-white/10"
     : "text-slate-600 hover:text-slate-950 hover:bg-slate-900/5";
-  const activeClasses = isDarkMode
-    ? "bg-white text-slate-950 shadow-[0_18px_44px_-24px_rgba(255,255,255,0.8)] ring-1 ring-white/70"
-    : "bg-slate-950 text-white shadow-[0_20px_45px_-24px_rgba(15,23,42,0.55)] ring-1 ring-slate-950/10";
+  const activeClasses = "theme-active-link text-white ring-1 ring-white/35";
   const iconClasses = isDarkMode
     ? isActive
-      ? "bg-slate-900 text-white"
+      ? "bg-white/20 text-white"
       : "bg-white/8 text-slate-300"
     : isActive
-      ? "bg-white/20 text-white"
+      ? "bg-white/22 text-white"
       : "bg-slate-900/5 text-slate-500";
 
   return (
@@ -93,6 +109,11 @@ function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
 export default function Layout({ children, currentPageName }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [accentTheme, setAccentTheme] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_ACCENT_THEME;
+    const storedTheme = window.localStorage.getItem(ACCENT_THEME_STORAGE_KEY);
+    return THEME_ACCENTS.some((accent) => accent.id === storedTheme) ? storedTheme : DEFAULT_ACCENT_THEME;
+  });
   const [mounted, setMounted] = useState(false);
   const { authorLabel, avatarUrl, signOut, role } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -112,6 +133,11 @@ export default function Layout({ children, currentPageName }) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.accentTheme = accentTheme;
+    window.localStorage.setItem(ACCENT_THEME_STORAGE_KEY, accentTheme);
+  }, [accentTheme]);
 
   useEffect(() => {
     let activeElement = null;
@@ -189,6 +215,10 @@ export default function Layout({ children, currentPageName }) {
         items: section.items.filter((item) => !item.adminOnly || role === "admin"),
       })).filter((section) => section.items.length > 0),
     [role]
+  );
+  const currentAccent = useMemo(
+    () => THEME_ACCENTS.find((accent) => accent.id === accentTheme) || THEME_ACCENTS[0],
+    [accentTheme]
   );
 
   const shellClasses = isDarkMode
@@ -356,6 +386,53 @@ export default function Layout({ children, currentPageName }) {
                   {isDarkMode ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
                   {isDarkMode ? "Jasny" : "Ciemny"}
                 </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={`theme-picker-trigger rounded-2xl border px-3 ${isDarkMode ? "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10" : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"}`}
+                    >
+                      <span
+                        className="theme-picker-dot"
+                        style={{ "--swatch-a": currentAccent.rgb, "--swatch-b": currentAccent.rgb2 }}
+                      />
+                      <Palette className="h-4 w-4" />
+                      <span className="hidden xl:inline">{currentAccent.label}</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-[19rem] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold">Motyw</p>
+                        <p className={isDarkMode ? "text-xs text-slate-400" : "text-xs text-slate-500"}>Kolor akcentu</p>
+                      </div>
+                      <span
+                        className="theme-picker-preview"
+                        style={{ "--swatch-a": currentAccent.rgb, "--swatch-b": currentAccent.rgb2 }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                      {THEME_ACCENTS.map((accent) => {
+                        const isSelected = accent.id === accentTheme;
+                        return (
+                          <button
+                            key={accent.id}
+                            type="button"
+                            title={accent.label}
+                            aria-label={`Motyw ${accent.label}`}
+                            aria-pressed={isSelected}
+                            onClick={() => setAccentTheme(accent.id)}
+                            className={`theme-swatch ${isSelected ? "is-active" : ""}`}
+                            style={{ "--swatch-a": accent.rgb, "--swatch-b": accent.rgb2 }}
+                          >
+                            {isSelected ? <Check className="h-4 w-4" /> : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Link
                   to="/profile"
                   className={`menu-surface hidden items-center gap-3 rounded-[22px] border px-3 py-2 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] sm:flex ${panelClasses}`}
