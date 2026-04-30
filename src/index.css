@@ -354,6 +354,56 @@
     transform: scale(1.06) rotate(-4deg);
   }
 
+  .page-motion {
+    animation: pageFloatIn 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .page-motion > * {
+    animation: sectionFloatIn 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .page-motion > *:nth-child(2) {
+    animation-delay: 45ms;
+  }
+
+  .page-motion > *:nth-child(3) {
+    animation-delay: 90ms;
+  }
+
+  .page-motion > *:nth-child(4) {
+    animation-delay: 135ms;
+  }
+
+  .page-motion :where(.glass-surface, .glass-control, .bg-zinc-900\/50, .bg-zinc-900\/60, .bg-zinc-900\/70, .bg-zinc-950\/70, .bg-zinc-800\/50, .bg-zinc-800\/60, .bg-slate-50\/80):not(table):not(thead):not(tbody):not(tr):not(td):not(th) {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease,
+      opacity 180ms ease;
+  }
+
+  @media (hover: hover) {
+    .page-motion :where(.glass-surface, .glass-control, .bg-zinc-900\/50, .bg-zinc-900\/60, .bg-zinc-900\/70, .bg-zinc-950\/70, .bg-zinc-800\/50, .bg-zinc-800\/60, .bg-slate-50\/80):not(table):not(thead):not(tbody):not(tr):not(td):not(th):hover {
+      transform: translateY(-1px);
+    }
+  }
+
+  .order-row {
+    transition:
+      background-color 160ms ease,
+      box-shadow 160ms ease,
+      color 160ms ease;
+  }
+
+  .order-row:hover {
+    box-shadow: inset 3px 0 0 rgba(56, 189, 248, 0.32);
+  }
+
+  .order-row td {
+    transition: color 160ms ease, opacity 160ms ease;
+  }
+
   .pulse-ring {
     animation: pulseRing 4.5s ease-in-out infinite;
   }
@@ -526,6 +576,30 @@
   }
 }
 
+@keyframes pageFloatIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.996);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sectionFloatIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes pulseRing {
   0%,
   100% {
@@ -542,6 +616,8 @@
 @media (prefers-reduced-motion: reduce) {
   .ambient-orb,
   .menu-link,
+  .page-motion,
+  .page-motion > *,
   .pulse-ring {
     animation: none !important;
   }
@@ -549,6 +625,7 @@
   .menu-link:hover,
   .menu-link:hover .menu-link-icon,
   .menu-surface,
+  .page-motion :where(.glass-surface, .glass-control, .bg-zinc-900\/50, .bg-zinc-900\/60, .bg-zinc-900\/70, .bg-zinc-950\/70, .bg-zinc-800\/50, .bg-zinc-800\/60, .bg-slate-50\/80),
   .menu-surface * {
     transform: none !important;
     transition-duration: 0ms !important;

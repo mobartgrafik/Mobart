@@ -148,7 +148,7 @@ return (
 {normalizedOrders.map(order => (
 <TableRow
 key={order.id}
-className="border-zinc-800/50 hover:bg-zinc-800/30 cursor-pointer"
+className="order-row border-zinc-800/50 hover:bg-zinc-800/30 cursor-pointer"
 onClick={() => onPreview?.(order)}
 >
 

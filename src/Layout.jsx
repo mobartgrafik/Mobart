@@ -50,10 +50,7 @@ const GLASS_REACTIVE_SELECTOR = [
   ".glass-control",
   ".menu-surface",
   ".menu-link",
-  "[class*='bg-zinc-9']",
-  "[class*='bg-zinc-8']",
-  "[class*='bg-white/[0.0']",
-  "[class*='bg-slate-50/80']",
+  "[data-glass-reactive='true']",
 ].join(", ");
 
 function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
@@ -381,7 +378,9 @@ export default function Layout({ children, currentPageName }) {
             <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
 
             <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-8">
-              {children}
+              <div key={currentPageName || "page"} className="page-motion">
+                {children}
+              </div>
             </main>
           </div>
         </div>
