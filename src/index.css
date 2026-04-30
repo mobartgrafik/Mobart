@@ -123,7 +123,7 @@
     overflow: hidden;
     --glass-x: 50%;
     --glass-y: 50%;
-    --glass-hotspot-size: 190px;
+    --glass-hotspot-size: 170px;
     border-color: rgba(255, 255, 255, 0.56);
     background:
       linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.34)),
@@ -158,7 +158,7 @@
     overflow: hidden;
     --glass-x: 50%;
     --glass-y: 50%;
-    --glass-hotspot-size: 150px;
+    --glass-hotspot-size: 130px;
     border-color: rgba(255, 255, 255, 0.56);
     background:
       linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.28)),
@@ -191,7 +191,7 @@
     overflow: hidden;
     --glass-x: 50%;
     --glass-y: 50%;
-    --glass-hotspot-size: 160px;
+    --glass-hotspot-size: 140px;
   }
 
   .glass-surface::before,
@@ -206,10 +206,10 @@
     z-index: 0;
     opacity: 0;
     background:
-      radial-gradient(var(--glass-hotspot-size) circle at var(--glass-x) var(--glass-y), rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.36) 25%, rgba(125, 211, 252, 0.18) 44%, transparent 70%),
-      linear-gradient(118deg, transparent 12%, rgba(255, 255, 255, 0.28) 38%, rgba(255, 255, 255, 0.64) 48%, rgba(255, 255, 255, 0.2) 58%, transparent 82%);
-    filter: blur(0.2px);
-    mix-blend-mode: screen;
+      radial-gradient(var(--glass-hotspot-size) circle at var(--glass-x) var(--glass-y), rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1) 28%, rgba(125, 211, 252, 0.06) 48%, transparent 74%),
+      linear-gradient(118deg, transparent 18%, rgba(255, 255, 255, 0.06) 40%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.05) 60%, transparent 82%);
+    filter: blur(3px);
+    mix-blend-mode: normal;
     transition: opacity 180ms ease, filter 180ms ease;
   }
 
@@ -218,8 +218,8 @@
   .dark .menu-link::before,
   .dark .glass-hotspot::before {
     background:
-      radial-gradient(var(--glass-hotspot-size) circle at var(--glass-x) var(--glass-y), rgba(255, 255, 255, 0.7), rgba(125, 211, 252, 0.28) 28%, rgba(99, 102, 241, 0.12) 48%, transparent 72%),
-      linear-gradient(118deg, transparent 14%, rgba(255, 255, 255, 0.18) 38%, rgba(255, 255, 255, 0.42) 49%, rgba(103, 232, 249, 0.16) 60%, transparent 84%);
+      radial-gradient(var(--glass-hotspot-size) circle at var(--glass-x) var(--glass-y), rgba(255, 255, 255, 0.18), rgba(125, 211, 252, 0.1) 30%, rgba(99, 102, 241, 0.05) 52%, transparent 76%),
+      linear-gradient(118deg, transparent 18%, rgba(255, 255, 255, 0.06) 40%, rgba(255, 255, 255, 0.13) 50%, rgba(103, 232, 249, 0.06) 62%, transparent 84%);
   }
 
   .glass-surface[data-glass-active="true"]::before,
@@ -230,43 +230,43 @@
   .glass-control:hover::before,
   .menu-link:hover::before,
   .glass-hotspot:hover::before {
-    opacity: 0.9;
+    opacity: 0.28;
   }
 
   .glass-surface[data-glass-active="true"],
   .glass-surface:hover {
-    border-color: rgba(255, 255, 255, 0.84);
+    border-color: rgba(255, 255, 255, 0.64);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.95),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.28),
-      0 28px 86px -46px rgba(15, 23, 42, 0.58);
+      inset 0 1px 0 rgba(255, 255, 255, 0.86),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.2),
+      0 26px 76px -48px rgba(15, 23, 42, 0.5);
   }
 
   .dark .glass-surface[data-glass-active="true"],
   .dark .glass-surface:hover {
-    border-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.16);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.22),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.06),
-      0 32px 90px -50px rgba(0, 0, 0, 0.95);
+      inset 0 1px 0 rgba(255, 255, 255, 0.17),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+      0 30px 84px -52px rgba(0, 0, 0, 0.92);
   }
 
   .glass-control[data-glass-active="true"],
   .glass-control:hover,
   .glass-hotspot[data-glass-active="true"] {
-    border-color: rgba(255, 255, 255, 0.78);
+    border-color: rgba(255, 255, 255, 0.62);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.88),
-      0 18px 48px -34px rgba(15, 23, 42, 0.58);
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      0 16px 42px -34px rgba(15, 23, 42, 0.48);
   }
 
   .dark .glass-control[data-glass-active="true"],
   .dark .glass-control:hover,
   .dark .glass-hotspot[data-glass-active="true"] {
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.16);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.16),
-      0 18px 48px -34px rgba(0, 0, 0, 0.9);
+      inset 0 1px 0 rgba(255, 255, 255, 0.13),
+      0 16px 42px -34px rgba(0, 0, 0, 0.86);
   }
 
   .glass-surface::after {
@@ -317,9 +317,9 @@
     inset: 0;
     border-radius: inherit;
     background:
-      radial-gradient(var(--glass-hotspot-size, 220px) circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.18) 34%, transparent 68%),
-      linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 34%, transparent 66%, rgba(255, 255, 255, 0.1));
-    opacity: 0.46;
+      radial-gradient(var(--glass-hotspot-size, 180px) circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05) 34%, transparent 72%),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent 34%, transparent 66%, rgba(255, 255, 255, 0.06));
+    opacity: 0.28;
     pointer-events: none;
     z-index: 0;
     transition: opacity 180ms ease;
@@ -327,13 +327,13 @@
 
   .dark .menu-surface::before {
     background:
-      radial-gradient(var(--glass-hotspot-size, 220px) circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(125, 211, 252, 0.28), rgba(255, 255, 255, 0.12) 34%, transparent 68%),
-      linear-gradient(135deg, rgba(103, 232, 249, 0.1), transparent 34%, transparent 66%, rgba(255, 255, 255, 0.07));
+      radial-gradient(var(--glass-hotspot-size, 180px) circle at var(--glass-x, 50%) var(--glass-y, 50%), rgba(125, 211, 252, 0.12), rgba(255, 255, 255, 0.05) 34%, transparent 72%),
+      linear-gradient(135deg, rgba(103, 232, 249, 0.06), transparent 34%, transparent 66%, rgba(255, 255, 255, 0.045));
   }
 
   .menu-surface[data-glass-active="true"]::before,
   .menu-surface:hover::before {
-    opacity: 0.88;
+    opacity: 0.42;
   }
 
   .menu-surface > * {

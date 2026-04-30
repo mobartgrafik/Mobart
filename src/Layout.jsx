@@ -50,8 +50,6 @@ const GLASS_REACTIVE_SELECTOR = [
   ".glass-control",
   ".menu-surface",
   ".menu-link",
-  "button",
-  "a",
   "[class*='bg-zinc-9']",
   "[class*='bg-zinc-8']",
   "[class*='bg-white/[0.0']",
