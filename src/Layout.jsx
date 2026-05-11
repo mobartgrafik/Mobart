@@ -73,8 +73,8 @@ const THEME_ACCENTS = [
 
 function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
   const baseClasses = isDarkMode
-    ? "text-slate-300 hover:text-white hover:bg-white/10"
-    : "text-slate-600 hover:text-slate-950 hover:bg-slate-900/5";
+    ? "text-slate-300 hover:text-white hover:bg-white/[0.075]"
+    : "text-slate-600 hover:text-slate-950 hover:bg-slate-900/[0.045]";
   const activeClasses = "theme-active-link text-white ring-1 ring-white/35";
   const iconClasses = isDarkMode
     ? isActive
@@ -89,16 +89,16 @@ function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
       to={createPageUrl(item.name)}
       onClick={onClick}
       style={style}
-      className={`menu-link group relative flex items-center gap-3 overflow-hidden rounded-[24px] px-3 py-3 transition-all duration-300 ${isActive ? activeClasses : baseClasses}`}
+      className={`menu-link group relative flex items-center gap-3 overflow-hidden rounded-[24px] px-3 py-3 transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-500 ease-out ${isActive ? activeClasses : baseClasses}`}
     >
       <div
-        className={`menu-link-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${iconClasses}`}
+        className={`menu-link-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-[color,background-color,transform,box-shadow] duration-500 ease-out ${iconClasses}`}
       >
         <item.icon className="h-5 w-5" />
       </div>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{item.label}</p>
-        <p className={`truncate text-xs ${isActive ? "text-inherit/70" : isDarkMode ? "text-slate-500 group-hover:text-slate-400" : "text-slate-400 group-hover:text-slate-500"}`}>
+        <p className={`truncate text-xs transition-colors duration-500 ease-out ${isActive ? "text-inherit/70" : isDarkMode ? "text-slate-500 group-hover:text-slate-400" : "text-slate-400 group-hover:text-slate-500"}`}>
           {item.hint}
         </p>
       </div>
