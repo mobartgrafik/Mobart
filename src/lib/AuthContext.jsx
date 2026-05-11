@@ -4,8 +4,18 @@ import { fetchCurrentUserProfile, syncCurrentUserProfile } from '@/lib/userProfi
 
 const AuthContext = createContext();
 const LEGACY_ADMIN_USERNAMES = new Set(['kingastachura', 'gabrielsedkowski']);
+const AUTH_SESSION_TIMEOUT_MS = 12000;
 
 const normalizeUsername = (s) => String(s || '').trim().toLowerCase();
+
+function withTimeout(promise, timeoutMs, message) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+}
 
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
@@ -18,11 +28,30 @@ export const AuthProvider = ({ children }) => {
 
     const init = async () => {
       setIsLoadingAuth(true);
-      const { data, error } = await supabase.auth.getSession();
-      if (!mounted) return;
-      if (error) setAuthError({ type: 'unknown', message: error.message });
-      setSession(data?.session ?? null);
-      setIsLoadingAuth(false);
+      try {
+        const { data, error } = await withTimeout(
+          supabase.auth.getSession(),
+          AUTH_SESSION_TIMEOUT_MS,
+          'Supabase auth session check timed out.'
+        );
+        if (!mounted) return;
+        if (error) {
+          setAuthError({ type: 'unknown', message: error.message });
+        } else {
+          setAuthError(null);
+        }
+        setSession(data?.session ?? null);
+      } catch (error) {
+        if (!mounted) return;
+        console.error('Nie udało się sprawdzić sesji Supabase:', error);
+        setAuthError({
+          type: 'supabase_unavailable',
+          message: 'Nie udało się połączyć z Supabase. Odśwież stronę albo spróbuj za chwilę.',
+        });
+        setSession(null);
+      } finally {
+        if (mounted) setIsLoadingAuth(false);
+      }
     };
 
     init();

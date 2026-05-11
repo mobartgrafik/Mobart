@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function Login() {
-  const { isAuthenticated, isLoadingAuth, signIn } = useAuth();
+  const { isAuthenticated, isLoadingAuth, authError, signIn } = useAuth();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -36,6 +36,12 @@ export default function Login() {
       <div className="w-full max-w-md bg-zinc-900/60 border border-zinc-800/60 rounded-2xl p-6">
         <h1 className="text-2xl font-bold">Logowanie</h1>
         <p className="text-sm text-zinc-500 mt-1">Zaloguj się do GCRM</p>
+
+        {authError?.message && (
+          <div className="mt-5 text-sm text-amber-200 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+            {authError.message}
+          </div>
+        )}
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
