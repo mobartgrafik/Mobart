@@ -30,7 +30,10 @@ function groupBySession(entries) {
       current.type === "history" &&
       current.author === e.author &&
       current.order_id === e.order_id &&
-      Math.abs(new Date(e.created_at) - new Date(current.entries[current.entries.length - 1].created_at)) < 60000
+      Math.abs(
+        new Date(e.created_at).getTime() -
+          new Date(current.entries[current.entries.length - 1].created_at).getTime()
+      ) < 60000
     ) {
       current.entries.push(e);
     } else {

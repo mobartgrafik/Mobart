@@ -43,6 +43,7 @@ export default function CompletedOrders() {
   });
 
   const restoreMutation = useMutation({
+    /** @param {any} order */
     mutationFn: async (order) => {
       const { error } = await supabase
         .from("orders")
@@ -80,6 +81,7 @@ export default function CompletedOrders() {
   });
 
   const deleteMutation = useMutation({
+    /** @param {any} order */
     mutationFn: async (order) => {
       const { error } = await supabase
         .from("orders")

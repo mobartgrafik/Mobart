@@ -71,6 +71,12 @@ const THEME_ACCENTS = [
   { id: "graphite", label: "Grafit", rgb: "100 116 139", rgb2: "51 65 85" },
 ];
 
+const getSwatchStyle = (accent) =>
+  /** @type {any} */ ({
+    "--swatch-a": accent.rgb,
+    "--swatch-b": accent.rgb2,
+  });
+
 function SidebarLink({ item, isActive, onClick, isDarkMode, style }) {
   const baseClasses = isDarkMode
     ? "text-slate-300 hover:text-white hover:bg-white/[0.075]"
@@ -395,7 +401,7 @@ export default function Layout({ children, currentPageName }) {
                     >
                       <span
                         className="theme-picker-dot"
-                        style={{ "--swatch-a": currentAccent.rgb, "--swatch-b": currentAccent.rgb2 }}
+                        style={getSwatchStyle(currentAccent)}
                       />
                       <Palette className="h-4 w-4" />
                       <span className="hidden xl:inline">{currentAccent.label}</span>
@@ -409,7 +415,7 @@ export default function Layout({ children, currentPageName }) {
                       </div>
                       <span
                         className="theme-picker-preview"
-                        style={{ "--swatch-a": currentAccent.rgb, "--swatch-b": currentAccent.rgb2 }}
+                        style={getSwatchStyle(currentAccent)}
                       />
                     </div>
                     <div className="grid grid-cols-5 gap-2">
@@ -424,7 +430,7 @@ export default function Layout({ children, currentPageName }) {
                             aria-pressed={isSelected}
                             onClick={() => setAccentTheme(accent.id)}
                             className={`theme-swatch ${isSelected ? "is-active" : ""}`}
-                            style={{ "--swatch-a": accent.rgb, "--swatch-b": accent.rgb2 }}
+                            style={getSwatchStyle(accent)}
                           >
                             {isSelected ? <Check className="h-4 w-4" /> : null}
                           </button>

@@ -794,7 +794,12 @@ export default function BannerCreator() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => setLogoUrl(e.target?.result);
+    reader.onload = (e) => {
+      const result = e.target?.result;
+      if (typeof result === "string") {
+        setLogoUrl(result);
+      }
+    };
     reader.readAsDataURL(file);
   };
 

@@ -48,6 +48,7 @@ export default function OrderActivity({ orderId }) {
   });
 
 const addComment = useMutation({
+  /** @param {string} content */
   mutationFn: async (content) => {
     const { error } = await supabase
       .from("order_comments")

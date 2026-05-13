@@ -122,7 +122,7 @@ function CircleIndicator({ value, total, label, accent, tone }) {
   );
 }
 
-function KpiCard({ icon: Icon, label, value, tone, href, caption }) {
+function KpiCard({ icon: Icon, label, value, tone, href = "", caption }) {
   const tones = {
     sky: "bg-sky-500/12 text-sky-600 dark:bg-sky-500/12 dark:text-sky-300",
     emerald: "bg-emerald-500/12 text-emerald-600 dark:bg-emerald-500/12 dark:text-emerald-300",

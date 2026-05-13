@@ -57,7 +57,7 @@ onPreview,
 onEdit,
 onDelete,
 visibleCols = defaultCols,
-onRestore,
+onRestore = null,
 restoreLabel = "Przywróć",
 }) {
 

@@ -62,6 +62,7 @@ const { data: orders = [], isLoading } = useQuery({
 });
 
 const deleteMutation = useMutation({
+  /** @param {any} order */
   mutationFn: async (order) => {
 
     // usuń zlecenie

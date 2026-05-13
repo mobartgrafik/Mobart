@@ -101,6 +101,10 @@ async function createPublicPermission(fileId, accessToken) {
   }
 }
 
+/**
+ * @param {File} file
+ * @param {{ folderId?: string, fileName?: string, metadata?: Record<string, any> }} [options]
+ */
 export async function uploadFileToGoogleDrive(file, { folderId, fileName = file.name, metadata: customMetadata = {} } = {}) {
   const accessToken = await getGoogleDriveAccessToken();
   const metadata = {

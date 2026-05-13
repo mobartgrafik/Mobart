@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { supabase } from '@/supabase';
 import { fetchCurrentUserProfile, syncCurrentUserProfile } from '@/lib/userProfiles';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 const LEGACY_ADMIN_USERNAMES = new Set(['kingastachura', 'gabrielsedkowski']);
 const AUTH_SESSION_TIMEOUT_MS = 12000;
 
@@ -163,9 +163,10 @@ export const AuthProvider = ({ children }) => {
     if (error) throw error;
   };
 
+  /** @param {{ username?: string, displayName?: string, avatarUrl?: string }} [profile] */
   const updateProfile = async ({ username: newUsername, displayName: newDisplayName, avatarUrl: newAvatarUrl } = {}) => {
     setAuthError(null);
-    const data = {};
+    const data = /** @type {Record<string, any>} */ ({});
     if (newUsername !== undefined) data.username = newUsername;
     if (newDisplayName !== undefined) data.display_name = newDisplayName;
     if (newAvatarUrl !== undefined) data.avatar_url = newAvatarUrl;
