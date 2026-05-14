@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -224,7 +224,52 @@ const DEFAULT_TEMPLATE = {
 };
 
 const MAX_PREVIEW_WIDTH = 760;
+const MAX_PREVIEW_HEIGHT = 620;
+const MAX_EXPORT_SIDE = 8192;
+const MAX_EXPORT_PIXELS = 32_000_000;
+const STANDARD_LAYOUT = "standard";
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+
+const normalizeLayoutVariant = (value) => (value === "classicSale" ? "classicSale" : STANDARD_LAYOUT);
+
+const getPresetByLabel = (label) => PRESETS.find((item) => item.label === label) || PRESETS[0];
+
+const getLongestLineLength = (text = "") =>
+  String(text)
+    .split("\n")
+    .reduce((longest, line) => Math.max(longest, line.trim().length), 1);
+
+const getLineCount = (text = "", fontSize, maxWidth, charWidth = 0.56) => {
+  const charsPerLine = Math.max(1, Math.floor(maxWidth / Math.max(1, fontSize * charWidth)));
+  return String(text)
+    .split("\n")
+    .reduce((count, line) => count + Math.max(1, Math.ceil(Math.max(1, line.trim().length) / charsPerLine)), 0);
+};
+
+const fitTextBlock = ({ text, requestedSize, maxWidth, maxHeight, minSize, maxSize, lineHeight = 1, charWidth = 0.56 }) => {
+  const safeMaxSize = Math.max(minSize, maxSize);
+  let size = clamp(Number(requestedSize) || minSize, minSize, safeMaxSize);
+
+  for (let index = 0; index < 8; index += 1) {
+    const lineCount = getLineCount(text, size, maxWidth, charWidth);
+    const blockHeight = lineCount * size * lineHeight;
+    const longestLineWidth = getLongestLineLength(text) * size * charWidth;
+    const heightRatio = maxHeight / Math.max(1, blockHeight);
+    const widthRatio = maxWidth / Math.max(1, longestLineWidth);
+    const ratio = Math.min(heightRatio, widthRatio, 1);
+
+    if (ratio >= 0.98) break;
+    size = Math.max(minSize, Math.floor(size * ratio));
+  }
+
+  return size;
+};
+
+const getExportScale = (width, height) => {
+  const sideScale = MAX_EXPORT_SIDE / Math.max(width, height);
+  const pixelScale = Math.sqrt(MAX_EXPORT_PIXELS / Math.max(1, width * height));
+  return Math.max(1, Math.min(2, sideScale, pixelScale));
+};
 
 function SalePhoneIcon({ size = 34, color = "#ffe100" }) {
   return (
@@ -242,26 +287,56 @@ function PresetTile({ active, title, meta, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-[22px] border px-4 py-3 text-left transition-all duration-200 ${
+      className={`rounded-lg border px-4 py-3 text-left transition-all duration-200 ${
         active
           ? "border-sky-400/60 bg-sky-500/10 text-white shadow-[0_18px_40px_-28px_rgba(56,189,248,0.5)]"
           : "border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20 hover:bg-white/[0.05]"
       }`}
     >
       <p className="text-sm font-semibold">{title}</p>
-      <p className="mt-1 text-xs text-inherit/70">{meta}</p>
+      <p className="mt-1 text-xs opacity-70">{meta}</p>
     </button>
   );
 }
 
 function TemplateCard({ template, onApply }) {
+  const templatePreset = getPresetByLabel(template.config.presetLabel);
+  const previewScale = Math.min(1, 420 / templatePreset.w, 132 / templatePreset.h);
+  const previewWidth = Math.round(templatePreset.w * previewScale);
+  const previewHeight = Math.round(templatePreset.h * previewScale);
+
   return (
     <button
       type="button"
       onClick={() => onApply(template.name)}
-      className="group overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.03] text-left transition-all duration-200 hover:border-sky-400/30 hover:bg-white/[0.05]"
+      className="group overflow-hidden rounded-lg border border-white/10 bg-white/[0.03] text-left transition-all duration-200 hover:border-sky-400/30 hover:bg-white/[0.05]"
     >
-      <div className="h-28" style={{ background: template.previewBg }} />
+      <div className="flex h-36 items-center justify-center overflow-hidden bg-slate-950/80 p-3">
+        <div
+          style={{
+            width: previewWidth,
+            height: previewHeight,
+            overflow: "hidden",
+            boxShadow: "0 16px 40px -26px rgba(15,23,42,0.95)",
+          }}
+        >
+          <div
+            style={{
+              width: templatePreset.w,
+              height: templatePreset.h,
+              transform: `scale(${previewScale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <BannerArtwork
+              config={{ ...template.config, layoutVariant: normalizeLayoutVariant(template.config.layoutVariant) }}
+              width={templatePreset.w}
+              height={templatePreset.h}
+              logoUrl=""
+            />
+          </div>
+        </div>
+      </div>
       <div className="space-y-1 px-4 py-4">
         <p className="text-sm font-semibold text-white">{template.name}</p>
         <p className="text-xs leading-5 text-slate-400">{template.description}</p>
@@ -278,7 +353,7 @@ function StatTile({ label, value, tone = "default" }) {
   };
 
   return (
-    <div className={`rounded-[24px] border px-4 py-4 ${tones[tone]}`}>
+    <div className={`rounded-lg border px-4 py-4 ${tones[tone]}`}>
       <p className="text-[11px] uppercase tracking-[0.24em] text-inherit/60">{label}</p>
       <p className="mt-2 text-2xl font-semibold">{value}</p>
     </div>
@@ -286,13 +361,79 @@ function StatTile({ label, value, tone = "default" }) {
 }
 
 function BannerArtwork({ config, width, height, logoUrl }) {
-  const isClassicSale = config.layoutVariant === "classicSale";
+  const isClassicSale = normalizeLayoutVariant(config.layoutVariant) === "classicSale";
   const horizontalAlign = config.align === "center" ? "center" : config.align === "right" ? "flex-end" : "flex-start";
   const textAlign = config.align;
-  const padding = Math.round(width * (config.padding / 100));
-  const contentWidth = Math.round(width * (config.contentWidth / 100));
-  const panelRadius = Math.max(28, Math.round(width * 0.028));
-  const panelPadding = Math.max(24, Math.round(width * 0.045));
+  const shortestSide = Math.max(1, Math.min(width, height));
+  const safePaddingPercent = clamp(Number(config.padding) || 0, 0, 18);
+  const padding = Math.round(shortestSide * (safePaddingPercent / 100));
+  const availableWidth = Math.max(80, width - padding * 2);
+  const availableHeight = Math.max(80, height - padding * 2);
+  const contentWidth = Math.min(availableWidth, Math.round(width * (clamp(Number(config.contentWidth) || 70, 35, 100) / 100)));
+  const panelPadding = config.panelStyle === "none" ? 0 : clamp(Math.round(shortestSide * 0.055), 16, 58);
+  const innerWidth = Math.max(60, contentWidth - panelPadding * 2);
+  const innerHeight = Math.max(60, availableHeight - panelPadding * 2);
+  const hasEyebrow = Boolean(config.showEyebrow && String(config.eyebrow || "").trim());
+  const hasSubtext = Boolean(String(config.subtext || "").trim());
+  const hasCta = Boolean(config.showCta && String(config.cta || "").trim());
+  const hasPhone = Boolean(config.showPhone && String(config.phoneNumber || "").trim());
+  const hasActions = hasCta || hasPhone;
+  const gap = clamp(Math.round(shortestSide * 0.026), 10, 30);
+  const logoHeight = logoUrl ? Math.min(Number(config.logoSize) || 96, innerHeight * 0.22) : 0;
+  const eyebrowSize = hasEyebrow
+    ? fitTextBlock({
+        text: config.eyebrow,
+        requestedSize: Math.max(12, Math.round(width * 0.012)),
+        maxWidth: innerWidth,
+        maxHeight: innerHeight * 0.11,
+        minSize: 10,
+        maxSize: Math.min(28, shortestSide * 0.055),
+        lineHeight: 1.15,
+        charWidth: 0.62,
+      })
+    : 0;
+  const actionTextSize = hasActions
+    ? fitTextBlock({
+        text: `${hasCta ? config.cta : ""} ${hasPhone ? config.phoneNumber : ""}`.trim(),
+        requestedSize: config.phoneTextSize || Math.max(20, Math.round((config.headlineSize || 72) * 0.28)),
+        maxWidth: innerWidth,
+        maxHeight: innerHeight * 0.18,
+        minSize: 12,
+        maxSize: Math.min(48, shortestSide * 0.09),
+        lineHeight: 1.1,
+        charWidth: 0.56,
+      })
+    : 0;
+  const subtextMaxHeight = hasSubtext ? innerHeight * 0.24 : 0;
+  const reservedVerticalSpace =
+    logoHeight +
+    (hasEyebrow ? eyebrowSize * 1.45 : 0) +
+    (hasActions ? actionTextSize * 1.85 : 0) +
+    (hasSubtext ? Math.max(18, gap) : 0) +
+    gap * [logoUrl, hasEyebrow, hasSubtext, hasActions].filter(Boolean).length;
+  const headlineMaxHeight = Math.max(innerHeight * 0.2, innerHeight - reservedVerticalSpace - subtextMaxHeight);
+  const safeHeadlineSize = fitTextBlock({
+    text: config.headline || "",
+    requestedSize: config.headlineSize,
+    maxWidth: innerWidth,
+    maxHeight: headlineMaxHeight,
+    minSize: 18,
+    maxSize: Math.min(Number(config.headlineSize) || 86, width * 0.14, shortestSide * 0.28),
+    lineHeight: 0.98,
+    charWidth: 0.56,
+  });
+  const safeSubtextSize = hasSubtext
+    ? fitTextBlock({
+        text: config.subtext,
+        requestedSize: config.subtextSize,
+        maxWidth: innerWidth,
+        maxHeight: subtextMaxHeight,
+        minSize: 12,
+        maxSize: Math.min(Number(config.subtextSize) || 26, shortestSide * 0.09, 54),
+        lineHeight: 1.24,
+        charWidth: 0.5,
+      })
+    : 0;
 
   const panelBackground =
     config.panelStyle === "glass"
@@ -312,15 +453,39 @@ function BannerArtwork({ config, width, height, logoUrl }) {
 
   const panelShadow =
     config.panelStyle === "none" ? "none" : "0 30px 80px -45px rgba(15, 23, 42, 0.75)";
-  const classicPhoneStyle = config.phoneStyle === "badge";
+  const classicPhoneStyle = config.phoneStyle === "badge" || config.phoneStyle === "classicSale";
 
   if (isClassicSale) {
+    const edge = Math.round(width * 0.07);
     const headlineTop = Math.round(height * 0.14);
-    const headlineLeft = Math.round(width * 0.07);
     const phoneTop = Math.round(height * 0.61);
-    const phoneLeft = Math.round(width * 0.07);
-    const iconSize = config.phoneIconSize || Math.max(84, Math.round(width * 0.075));
-    const phoneFontSize = config.phoneTextSize || Math.max(50, Math.round(width * 0.054));
+    const maxClassicWidth = width - edge * 2;
+    const requestedHeadlineSize = Number(config.headlineSize) || 132;
+    const headlineSize = fitTextBlock({
+      text: config.headline || "SPRZEDAM",
+      requestedSize: requestedHeadlineSize,
+      maxWidth: maxClassicWidth,
+      maxHeight: height * 0.34,
+      minSize: 24,
+      maxSize: Math.min(requestedHeadlineSize, height * 0.28, width * 0.16),
+      lineHeight: 0.92,
+      charWidth: 0.55,
+    });
+    const requestedIconSize = Number(config.phoneIconSize) || Math.max(84, Math.round(width * 0.075));
+    const iconSize = clamp(Math.round(requestedIconSize), 36, Math.min(height * 0.18, width * 0.12));
+    const phoneGap = Math.max(16, Math.round(width * 0.018));
+    const maxPhoneTextWidth = maxClassicWidth - iconSize - phoneGap;
+    const requestedPhoneSize = Number(config.phoneTextSize) || Math.max(50, Math.round(width * 0.054));
+    const phoneFontSize = fitTextBlock({
+      text: config.phoneNumber || "",
+      requestedSize: requestedPhoneSize,
+      maxWidth: maxPhoneTextWidth,
+      maxHeight: height * 0.16,
+      minSize: 20,
+      maxSize: Math.min(requestedPhoneSize, height * 0.14, width * 0.08),
+      lineHeight: 1,
+      charWidth: 0.52,
+    });
 
     return (
       <div
@@ -329,7 +494,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
           height,
           position: "relative",
           overflow: "hidden",
-          background: "#ffe100",
+          background: config.background || "#ffe100",
           color: "#111111",
           fontFamily: `"${config.font}", sans-serif`,
         }}
@@ -339,18 +504,19 @@ function BannerArtwork({ config, width, height, logoUrl }) {
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 86% 18%, rgba(17,17,17,0.12) 0%, rgba(17,17,17,0.05) 14%, rgba(255,225,0,0) 36%), radial-gradient(circle at 88% 78%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 14%, rgba(255,225,0,0) 32%)",
+              "linear-gradient(105deg, rgba(17,17,17,0.05) 0%, rgba(17,17,17,0) 38%), linear-gradient(250deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 36%)",
           }}
         />
 
         <div
           style={{
             position: "absolute",
-            left: headlineLeft,
+            left: edge,
             top: headlineTop,
-            fontSize: config.headlineSize,
+            right: edge,
+            fontSize: headlineSize,
             lineHeight: 0.86,
-            letterSpacing: "-0.085em",
+            letterSpacing: 0,
             fontWeight: 900,
             color: "#111111",
             textTransform: "uppercase",
@@ -358,6 +524,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
             transform: "scaleY(1.06)",
             transformOrigin: "left top",
             whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
           }}
         >
           {config.headline}
@@ -367,12 +534,14 @@ function BannerArtwork({ config, width, height, logoUrl }) {
           <div
             style={{
               position: "absolute",
-              left: phoneLeft,
+              left: edge,
               top: phoneTop,
+              right: edge,
               display: "flex",
               alignItems: "center",
-              gap: Math.max(22, Math.round(width * 0.018)),
+              gap: phoneGap,
               color: "#111111",
+              minWidth: 0,
             }}
           >
             <span
@@ -395,10 +564,12 @@ function BannerArtwork({ config, width, height, logoUrl }) {
               style={{
                 fontSize: phoneFontSize,
                 lineHeight: 1,
-                letterSpacing: "-0.075em",
+                letterSpacing: 0,
                 fontWeight: 900,
                 color: "#111111",
                 textShadow: "0 8px 14px rgba(17,17,17,0.08)",
+                minWidth: 0,
+                overflowWrap: "anywhere",
               }}
             >
               {config.phoneNumber}
@@ -433,26 +604,19 @@ function BannerArtwork({ config, width, height, logoUrl }) {
       <div
         style={{
           position: "absolute",
-          width: width * 0.52,
-          height: width * 0.52,
-          borderRadius: "999px",
-          right: -width * 0.16,
-          top: -width * 0.16,
-          background: `radial-gradient(circle, ${config.accentColor}66 0%, transparent 70%)`,
-          filter: "blur(18px)",
-          opacity: 0.9,
+          inset: 0,
+          background: `linear-gradient(115deg, ${config.accentColor}24 0%, rgba(255,255,255,0) 34%), linear-gradient(245deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 38%)`,
+          opacity: config.panelStyle === "solid" ? 0.35 : 0.7,
         }}
       />
       <div
         style={{
           position: "absolute",
-          width: width * 0.38,
-          height: width * 0.38,
-          borderRadius: "999px",
-          left: -width * 0.12,
-          bottom: -width * 0.18,
-          background: "radial-gradient(circle, rgba(255,255,255,0.18) 0%, transparent 72%)",
-          filter: "blur(12px)",
+          inset: 0,
+          background:
+            "linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(0deg, rgba(255,255,255,0.045) 1px, transparent 1px)",
+          backgroundSize: `${Math.max(48, Math.round(width * 0.08))}px ${Math.max(48, Math.round(width * 0.08))}px`,
+          opacity: 0.22,
         }}
       />
       <div
@@ -462,24 +626,29 @@ function BannerArtwork({ config, width, height, logoUrl }) {
           display: "flex",
           alignItems: "stretch",
           justifyContent: horizontalAlign,
+          minWidth: 0,
+          minHeight: 0,
         }}
       >
         <div
           style={{
             width: contentWidth,
             maxWidth: "100%",
+            minHeight: 0,
+            boxSizing: "border-box",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             alignItems: config.align === "center" ? "center" : config.align === "right" ? "flex-end" : "flex-start",
             textAlign,
-            gap: Math.max(14, Math.round(height * 0.026)),
+            gap,
             padding: panelPadding,
-            borderRadius: panelRadius,
+            borderRadius: clamp(Math.round(shortestSide * 0.018), 8, 26),
             background: panelBackground,
             border: panelBorder,
             boxShadow: panelShadow,
             backdropFilter: config.panelStyle === "none" ? "none" : "blur(12px)",
+            overflow: "hidden",
           }}
         >
           {logoUrl ? (
@@ -488,10 +657,12 @@ function BannerArtwork({ config, width, height, logoUrl }) {
               alt="Logo"
               crossOrigin="anonymous"
               style={{
-                width: config.logoSize,
+                width: Math.min(Number(config.logoSize) || 96, innerWidth * 0.42),
                 maxWidth: "42%",
                 height: "auto",
+                maxHeight: innerHeight * 0.22,
                 objectFit: "contain",
+                flex: "0 0 auto",
               }}
             />
           ) : null}
@@ -508,9 +679,12 @@ function BannerArtwork({ config, width, height, logoUrl }) {
                 color: config.panelStyle === "solid" ? "#0f172a" : "#ffffff",
                 border: `1px solid ${config.accentColor}55`,
                 letterSpacing: "0.18em",
-                fontSize: Math.max(14, Math.round(width * 0.012)),
+                fontSize: eyebrowSize,
                 fontWeight: 700,
                 textTransform: "uppercase",
+                maxWidth: "100%",
+                boxSizing: "border-box",
+                overflowWrap: "anywhere",
               }}
             >
               <span
@@ -528,13 +702,13 @@ function BannerArtwork({ config, width, height, logoUrl }) {
 
           <div
             style={{
-              fontSize: config.headlineSize,
+              fontSize: safeHeadlineSize,
               lineHeight: 0.95,
               fontWeight: 900,
-              letterSpacing: "-0.04em",
+              letterSpacing: 0,
               maxWidth: "100%",
               whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
+              overflowWrap: "anywhere",
               color: config.headlineColor,
               textShadow: config.panelStyle === "solid" ? "none" : "0 18px 40px rgba(15,23,42,0.28)",
             }}
@@ -544,11 +718,11 @@ function BannerArtwork({ config, width, height, logoUrl }) {
 
           <div
             style={{
-              fontSize: config.subtextSize,
+              fontSize: safeSubtextSize || Math.max(12, Math.round(safeHeadlineSize * 0.32)),
               lineHeight: 1.3,
               maxWidth: "100%",
               whiteSpace: "pre-wrap",
-              wordBreak: "break-word",
+              overflowWrap: "anywhere",
               color: config.subtextColor,
               opacity: 0.95,
             }}
@@ -565,6 +739,7 @@ function BannerArtwork({ config, width, height, logoUrl }) {
               gap: Math.max(12, Math.round(width * 0.015)),
               width: "100%",
               marginTop: 8,
+              minWidth: 0,
             }}
           >
             {config.showCta && config.cta ? (
@@ -577,13 +752,16 @@ function BannerArtwork({ config, width, height, logoUrl }) {
                   borderRadius: 999,
                   background: config.accentColor,
                   color: "#ffffff",
-                  fontSize: Math.max(18, Math.round(config.subtextSize * 0.8)),
+                  fontSize: Math.max(12, Math.round(actionTextSize * 0.82)),
                   fontWeight: 800,
                   boxShadow: `0 20px 40px -28px ${config.accentColor}`,
+                  maxWidth: "100%",
+                  boxSizing: "border-box",
+                  overflowWrap: "anywhere",
                 }}
               >
-                <Sparkles size={Math.max(16, Math.round(width * 0.016))} />
-                <span>{config.cta}</span>
+                <Sparkles size={Math.max(14, Math.round(actionTextSize * 0.85))} />
+                <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{config.cta}</span>
               </div>
             ) : null}
 
@@ -606,27 +784,30 @@ function BannerArtwork({ config, width, height, logoUrl }) {
                       ? "1px solid rgba(15,23,42,0.12)"
                       : "1px solid rgba(255,255,255,0.12)",
                   color: config.headlineColor,
-                  fontSize: config.phoneTextSize || (classicPhoneStyle ? Math.max(42, Math.round(config.headlineSize * 0.44)) : Math.max(20, Math.round(config.headlineSize * 0.28))),
+                  fontSize: actionTextSize,
                   fontWeight: 800,
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  boxSizing: "border-box",
                 }}
               >
                 <span
                   style={{
-                    width: classicPhoneStyle ? config.phoneIconSize || Math.max(86, Math.round(width * 0.09)) : "auto",
-                    height: classicPhoneStyle ? config.phoneIconSize || Math.max(86, Math.round(width * 0.09)) : "auto",
-                    minWidth: classicPhoneStyle ? config.phoneIconSize || Math.max(86, Math.round(width * 0.09)) : "auto",
+                    width: classicPhoneStyle ? Math.min(config.phoneIconSize || Math.max(60, Math.round(width * 0.07)), shortestSide * 0.16) : "auto",
+                    height: classicPhoneStyle ? Math.min(config.phoneIconSize || Math.max(60, Math.round(width * 0.07)), shortestSide * 0.16) : "auto",
+                    minWidth: classicPhoneStyle ? Math.min(config.phoneIconSize || Math.max(60, Math.round(width * 0.07)), shortestSide * 0.16) : "auto",
                     borderRadius: classicPhoneStyle ? "999px" : "0",
                     background: classicPhoneStyle ? "#111111" : "transparent",
                     color: classicPhoneStyle ? "#ffe100" : config.headlineColor,
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    }}
-                  >
-                    <Phone size={config.phoneIconSize || (classicPhoneStyle ? Math.max(34, Math.round(width * 0.03)) : Math.max(20, Math.round(width * 0.02)))} />
-                  </span>
-                  <span>{config.phoneNumber}</span>
-                </div>
+                  }}
+                >
+                  <Phone size={Math.max(16, Math.min(config.phoneIconSize || Math.round(actionTextSize * 1.2), actionTextSize * 1.45))} />
+                </span>
+                <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{config.phoneNumber}</span>
+              </div>
             ) : null}
           </div>
         </div>
@@ -643,6 +824,7 @@ export default function BannerCreator() {
   const [customW, setCustomW] = useState(1200);
   const [customH, setCustomH] = useState(600);
   const [background, setBackground] = useState(DEFAULT_TEMPLATE.background);
+  const [layoutVariant, setLayoutVariant] = useState(normalizeLayoutVariant(DEFAULT_TEMPLATE.layoutVariant));
   const [panelStyle, setPanelStyle] = useState(DEFAULT_TEMPLATE.panelStyle);
   const [overlayOpacity, setOverlayOpacity] = useState(DEFAULT_TEMPLATE.overlayOpacity);
   const [headline, setHeadline] = useState(DEFAULT_TEMPLATE.headline);
@@ -668,15 +850,22 @@ export default function BannerCreator() {
   const [contentWidth, setContentWidth] = useState(DEFAULT_TEMPLATE.contentWidth);
   const [padding, setPadding] = useState(DEFAULT_TEMPLATE.padding);
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const [previewBounds, setPreviewBounds] = useState({ width: MAX_PREVIEW_WIDTH });
 
   const exportRef = useRef(null);
+  const previewStageRef = useRef(null);
   const customPreset = PRESETS.find((item) => item.label === "Własny format");
-  const preset = PRESETS.find((item) => item.label === presetLabel) || PRESETS[0];
+  const preset = getPresetByLabel(presetLabel);
   const width = preset.w ?? customW;
   const height = preset.h ?? customH;
-  const scale = useMemo(() => Math.min(1, MAX_PREVIEW_WIDTH / width), [width]);
+  const scale = useMemo(() => {
+    const availableWidth = Math.max(220, (previewBounds.width || MAX_PREVIEW_WIDTH) - 32);
+    return Math.min(1, availableWidth / width, MAX_PREVIEW_HEIGHT / height);
+  }, [height, previewBounds.width, width]);
 
   const bannerConfig = {
+    layoutVariant,
     background,
     panelStyle,
     overlayOpacity,
@@ -703,6 +892,26 @@ export default function BannerCreator() {
     phoneIconSize,
   };
 
+  useEffect(() => {
+    const node = previewStageRef.current;
+    if (!node) return undefined;
+
+    const updateBounds = () => {
+      setPreviewBounds({ width: node.clientWidth || MAX_PREVIEW_WIDTH });
+    };
+
+    updateBounds();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateBounds);
+      return () => window.removeEventListener("resize", updateBounds);
+    }
+
+    const observer = new ResizeObserver(updateBounds);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   const presetSummary = `${width} × ${height}px`;
   const visualDensity = headline.length > 42 ? "bardziej tekstowy" : showPhone || showCta ? "sprzedażowy" : "minimalny";
   const activeTemplate = TEMPLATES.find((item) => item.name === activeTemplateName);
@@ -721,6 +930,7 @@ export default function BannerCreator() {
     }
 
     setBackground(template.config.background);
+    setLayoutVariant(normalizeLayoutVariant(template.config.layoutVariant));
     setPanelStyle(template.config.panelStyle);
     setOverlayOpacity(template.config.overlayOpacity);
     setAlign(template.config.align);
@@ -753,6 +963,7 @@ export default function BannerCreator() {
     setCustomW(1200);
     setCustomH(600);
     setBackground(DEFAULT_TEMPLATE.background);
+    setLayoutVariant(normalizeLayoutVariant(DEFAULT_TEMPLATE.layoutVariant));
     setPanelStyle(DEFAULT_TEMPLATE.panelStyle);
     setOverlayOpacity(DEFAULT_TEMPLATE.overlayOpacity);
     setAlign(DEFAULT_TEMPLATE.align);
@@ -804,20 +1015,29 @@ export default function BannerCreator() {
   };
 
   const handleExport = async () => {
-    if (!exportRef.current) return;
-
     setExporting(true);
+    setExportError("");
     try {
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (!exportRef.current) throw new Error("Warstwa eksportu nie została przygotowana.");
+      await document.fonts?.ready;
+      const exportScale = getExportScale(width, height);
       const canvas = await html2canvas(exportRef.current, {
-        scale: 2,
+        scale: exportScale,
         useCORS: true,
         backgroundColor: null,
+        logging: false,
+        windowWidth: width,
+        windowHeight: height,
       });
 
       const link = document.createElement("a");
       link.download = `baner-${width}x${height}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
+    } catch (error) {
+      console.error("Nie udało się wygenerować banera:", error);
+      setExportError("Nie udało się wygenerować PNG. Spróbuj mniejszego formatu albo usuń zewnętrzną grafikę.");
     } finally {
       setExporting(false);
     }
@@ -825,19 +1045,18 @@ export default function BannerCreator() {
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.18),transparent_30%),linear-gradient(180deg,rgba(15,23,42,0.92),rgba(2,6,23,0.96))] p-6 shadow-[0_30px_120px_-55px_rgba(14,165,233,0.45)] md:p-8">
+      <div className="overflow-hidden rounded-lg border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.94),rgba(2,6,23,0.98))] p-6 shadow-[0_30px_120px_-55px_rgba(14,165,233,0.35)] md:p-8">
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr] xl:items-end">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-sky-100">
               <Sparkles className="h-3.5 w-3.5" />
               Studio banerów
             </div>
-            <h1 className="mt-5 max-w-3xl text-4xl font-semibold tracking-tight text-white md:text-5xl">
-              Rozbudowany kreator banerów z lepszym layoutem, szablonami i eksportem bez utraty jakości.
+            <h1 className="mt-5 max-w-3xl text-4xl font-semibold text-white md:text-5xl">
+              Kreator banerów gotowy do stabilnego podglądu i eksportu.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-              Zamiast surowego generatora masz teraz pełniejszy system: szybkie starty od gotowych templatek, panel treści,
-              CTA, telefon, branding i preview bliższy finalnej kompozycji.
+              Edytor pilnuje proporcji, bezpiecznych marginesów i rozmiarów tekstu, żeby grafika nie rozjeżdżała się przy zmianie formatu.
             </p>
           </div>
 
@@ -850,7 +1069,7 @@ export default function BannerCreator() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[380px_1fr]">
-        <div className="space-y-5 rounded-[30px] border border-white/10 bg-white/[0.03] p-5 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.9)]">
+        <div className="space-y-5 rounded-lg border border-white/10 bg-white/[0.03] p-5 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.9)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-white">Sterowanie</p>
@@ -866,7 +1085,7 @@ export default function BannerCreator() {
             </Button>
           </div>
 
-          <div className="rounded-[26px] border border-white/10 bg-slate-950/35 p-4">
+          <div className="rounded-lg border border-white/10 bg-slate-950/35 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <Label className="text-xs uppercase tracking-[0.22em] text-slate-500">System szablonów</Label>
@@ -879,7 +1098,7 @@ export default function BannerCreator() {
                     : "Tworzysz banner od zera z pełnym sterowaniem układem, CTA i brandingiem."}
                 </p>
               </div>
-              <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-2 text-sky-200">
+              <div className="rounded-lg border border-sky-400/20 bg-sky-500/10 p-2 text-sky-200">
                 <Layers3 className="h-4 w-4" />
               </div>
             </div>
@@ -911,7 +1130,11 @@ export default function BannerCreator() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setActiveTemplateName("Własny układ")}
+                  onClick={() => {
+                    setActiveTemplateName("Własny układ");
+                    setLayoutVariant(STANDARD_LAYOUT);
+                    setPhoneStyle((current) => (current === "classicSale" ? "badge" : current));
+                  }}
                   className="border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"
                 >
                   Przejdź na własny układ
@@ -920,15 +1143,15 @@ export default function BannerCreator() {
             </div>
           </div>
 
-          <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="rounded-[26px] border border-white/10 bg-slate-950/35 p-4">
-            <TabsList className="grid h-auto w-full grid-cols-3 rounded-[18px] bg-white/[0.04] p-1">
-              <TabsTrigger value="format" className="rounded-[14px] py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
+          <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="rounded-lg border border-white/10 bg-slate-950/35 p-4">
+            <TabsList className="grid h-auto w-full grid-cols-3 rounded-lg bg-white/[0.04] p-1">
+              <TabsTrigger value="format" className="rounded-md py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
                 Format
               </TabsTrigger>
-              <TabsTrigger value="content" className="rounded-[14px] py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
+              <TabsTrigger value="content" className="rounded-md py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
                 Treść
               </TabsTrigger>
-              <TabsTrigger value="style" className="rounded-[14px] py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
+              <TabsTrigger value="style" className="rounded-md py-2 text-xs data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-100">
                 Styl
               </TabsTrigger>
             </TabsList>
@@ -981,7 +1204,7 @@ export default function BannerCreator() {
                       type="button"
                       title={item.label}
                       onClick={() => setBackground(item.value)}
-                      className={`h-11 rounded-xl border-2 transition-all ${
+                      className={`h-11 rounded-lg border-2 transition-all ${
                         background === item.value ? "border-sky-400 scale-[0.96]" : "border-transparent hover:border-white/20"
                       }`}
                       style={{ background: item.value }}
@@ -1008,7 +1231,7 @@ export default function BannerCreator() {
                       key={item.value}
                       type="button"
                       onClick={() => setPanelStyle(item.value)}
-                      className={`rounded-2xl border px-3 py-2 text-xs transition-all ${
+                      className={`rounded-lg border px-3 py-2 text-xs transition-all ${
                         panelStyle === item.value
                           ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
                           : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
@@ -1043,7 +1266,7 @@ export default function BannerCreator() {
                 <div className="mt-3 flex items-center gap-3">
                   <Slider value={[headlineSize]} onValueChange={([value]) => setHeadlineSize(value)} min={34} max={180} step={2} className="flex-1" />
                   <span className="w-12 text-right text-xs text-slate-400">{headlineSize}px</span>
-                  <input type="color" value={headlineColor} onChange={(event) => setHeadlineColor(event.target.value)} className="h-10 w-10 rounded-xl border-0 bg-transparent" />
+                  <input type="color" value={headlineColor} onChange={(event) => setHeadlineColor(event.target.value)} className="h-10 w-10 rounded-lg border-0 bg-transparent" />
                 </div>
               </div>
 
@@ -1053,7 +1276,7 @@ export default function BannerCreator() {
                 <div className="mt-3 flex items-center gap-3">
                   <Slider value={[subtextSize]} onValueChange={([value]) => setSubtextSize(value)} min={16} max={72} step={1} className="flex-1" />
                   <span className="w-12 text-right text-xs text-slate-400">{subtextSize}px</span>
-                  <input type="color" value={subtextColor} onChange={(event) => setSubtextColor(event.target.value)} className="h-10 w-10 rounded-xl border-0 bg-transparent" />
+                  <input type="color" value={subtextColor} onChange={(event) => setSubtextColor(event.target.value)} className="h-10 w-10 rounded-lg border-0 bg-transparent" />
                 </div>
               </div>
 
@@ -1081,6 +1304,25 @@ export default function BannerCreator() {
                     <Slider value={[phoneIconSize]} onValueChange={([value]) => setPhoneIconSize(value)} min={24} max={140} step={1} className="flex-1" />
                     <span className="w-10 text-right text-xs text-slate-400">{phoneIconSize}px</span>
                   </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {[
+                    { value: "pill", label: "Pigułka" },
+                    { value: "badge", label: "Ikona" },
+                  ].map((item) => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setPhoneStyle(item.value)}
+                      className={`rounded-lg border px-3 py-2 text-xs transition-all ${
+                        phoneStyle === item.value || (phoneStyle === "classicSale" && item.value === "badge")
+                          ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
+                          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1130,7 +1372,7 @@ export default function BannerCreator() {
                         key={item.value}
                         type="button"
                         onClick={() => setAlign(item.value)}
-                        className={`rounded-2xl border px-3 py-2 text-xs transition-all ${
+                        className={`rounded-lg border px-3 py-2 text-xs transition-all ${
                           align === item.value
                             ? "border-sky-400/60 bg-sky-500/10 text-sky-100"
                             : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.05]"
@@ -1145,7 +1387,7 @@ export default function BannerCreator() {
 
               <div>
                 <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Logo / grafika</Label>
-                <label className="flex cursor-pointer items-center gap-2 rounded-[18px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 transition-colors hover:bg-white/[0.05]">
+                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300 transition-colors hover:bg-white/[0.05]">
                   <ImageIcon className="h-4 w-4 text-sky-300" />
                   {logoUrl ? "Podmień logo" : "Dodaj logo PNG / JPG"}
                   <input type="file" accept="image/*" className="hidden" onChange={handleLogoFile} />
@@ -1164,9 +1406,9 @@ export default function BannerCreator() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="mb-2 block text-xs uppercase tracking-[0.22em] text-slate-500">Kolor akcentu</Label>
-                  <div className="flex items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-2">
+                  <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2">
                     <Palette className="h-4 w-4 text-sky-300" />
-                    <input type="color" value={accentColor} onChange={(event) => setAccentColor(event.target.value)} className="h-10 w-full rounded-xl border-0 bg-transparent" />
+                    <input type="color" value={accentColor} onChange={(event) => setAccentColor(event.target.value)} className="h-10 w-full rounded-lg border-0 bg-transparent" />
                   </div>
                 </div>
 
@@ -1191,7 +1433,7 @@ export default function BannerCreator() {
         </div>
 
         <div className="space-y-4 xl:sticky xl:top-6 xl:self-start">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-[28px] border border-white/10 bg-white/[0.03] px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-5 py-4">
             <div>
               <p className="text-sm font-semibold text-white">Podgląd live</p>
               <p className="mt-1 text-xs text-slate-400">
@@ -1205,16 +1447,25 @@ export default function BannerCreator() {
               </Button>
             </div>
           </div>
+          {exportError ? (
+            <div className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+              {exportError}
+            </div>
+          ) : null}
 
-          <div className="overflow-auto rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.85),rgba(2,6,23,0.98))] p-4 shadow-[0_30px_100px_-60px_rgba(15,23,42,1)]">
+          <div
+            ref={previewStageRef}
+            className="overflow-hidden rounded-lg border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.85),rgba(2,6,23,0.98))] p-4 shadow-[0_30px_100px_-60px_rgba(15,23,42,1)]"
+          >
             <div
               style={{
                 width: width * scale,
                 height: height * scale,
                 position: "relative",
                 overflow: "hidden",
-                borderRadius: 26,
+                borderRadius: 8,
                 boxShadow: "0 40px 100px -50px rgba(15,23,42,0.95)",
+                margin: "0 auto",
               }}
             >
               <div
@@ -1253,21 +1504,26 @@ export default function BannerCreator() {
         </div>
       </div>
 
-      <div
-        style={{
-          position: "fixed",
-          left: -10000,
-          top: 0,
-          width,
-          height,
-          pointerEvents: "none",
-          opacity: 0,
-        }}
-      >
-        <div ref={exportRef}>
-          <BannerArtwork config={bannerConfig} width={width} height={height} logoUrl={logoUrl} />
+      {exporting ? (
+        <div
+          style={{
+            position: "fixed",
+            left: 0,
+            top: 0,
+            width,
+            height,
+            pointerEvents: "none",
+            opacity: 1,
+            transform: `translate3d(-${width + 64}px, 0, 0)`,
+            zIndex: -1,
+          }}
+          aria-hidden="true"
+        >
+          <div ref={exportRef}>
+            <BannerArtwork config={bannerConfig} width={width} height={height} logoUrl={logoUrl} />
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
